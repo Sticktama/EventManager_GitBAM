@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:orientation="horizontal"
+        android:background="#00796B"
+        android:padding="15dp">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Developers"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="35dp"
+            android:textColor="@color/black"
+            android:layout_marginRight="15dp"/>
+    </LinearLayout>
+    <!-- GridLayout for Members -->
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="3"
+        android:padding="5dp">
+        <!-- Member 1 -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="4dp"
+            android:layout_margin="15dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardPreventCornerOverlap="true">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/kent" />
+        </androidx.cardview.widget.CardView>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kent Albores"
+                android:textSize="20sp"
+                android:textColor="@color/black"
+                android:gravity="center_vertical"
+                android:shadowColor="#000957"
+                android:shadowDx="2.0"
+                android:shadowDy="1.0"
+                android:shadowRadius="2"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Backend Developer"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:gravity="center_vertical"/>
+
+        </LinearLayout>
+
+        <!-- Member 2 -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="4dp"
+            android:layout_margin="15dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardPreventCornerOverlap="true">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/frank" />
+        </androidx.cardview.widget.CardView>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Frank Oliver Bentoy"
+                android:textSize="20sp"
+                android:textColor="@color/black"
+                android:gravity="center_vertical"
+                android:shadowColor="#000957"
+                android:shadowDx="2.0"
+                android:shadowDy="1.0"
+                android:shadowRadius="2"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Web Developer"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:gravity="center_vertical"/>
+
+        </LinearLayout>
+
+        <!-- Member 3 -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="4dp"
+            android:layout_margin="15dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardPreventCornerOverlap="true">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/theus" />
+        </androidx.cardview.widget.CardView>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Theus Gabriel Mendez"
+                android:textSize="20sp"
+                android:textColor="@color/black"
+                android:gravity="center_vertical"
+                android:shadowColor="#000957"
+                android:shadowDx="2.0"
+                android:shadowDy="1.0"
+                android:shadowRadius="2"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Android Developer"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:gravity="center_vertical"/>
+
+        </LinearLayout>
+    </GridLayout>
+</LinearLayout>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_background">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:orientation="horizontal"
+        android:padding="15dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:gravity="center"
+            android:fontFamily="monospace"
+            android:textSize="35dp"
+            android:textColor="@color/black"
+            android:layout_marginRight="15dp"/>
+    </LinearLayout>
+
+
+    <Button
+        android:id="@+id/btn_developer_page"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Developers Page"
+        android:padding="10dp"
+        android:fontFamily="monospace"
+        android:layout_marginHorizontal="40dp"
+        android:shadowColor="@color/black"
+        android:shadowDy="2.0"
+        android:shadowDx="2.0"
+        android:shadowRadius="8"/>
+
+
+
+    <!-- Log Out Button -->
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Log Out"
+        android:padding="10dp"
+        android:fontFamily="monospace"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@android:color/holo_red_light"
+        android:textColor="@android:color/white"
+        android:layout_marginHorizontal="40dp"/>
+
+</LinearLayout>
