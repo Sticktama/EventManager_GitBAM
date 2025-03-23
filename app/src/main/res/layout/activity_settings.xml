@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:padding="20dp">
+
+    <!-- Developer Page Button -->
+    <Button
+        android:id="@+id/btn_developer_page"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Developer Page"
+        android:padding="12dp"
+        android:textSize="16sp"
+        android:fontFamily="sans-serif"
+        android:backgroundTint="@color/black"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="30dp"
+        android:elevation="4dp"
+        android:background="@drawable/rounded_corner"/>
+
+    <!-- Log Out Button -->
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Log Out"
+        android:padding="12dp"
+        android:textSize="16sp"
+        android:fontFamily="sans-serif"
+        android:backgroundTint="@android:color/holo_red_light"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="15dp"
+        android:elevation="4dp"
+        android:background="@drawable/rounded_corner"/>
+</LinearLayout>
