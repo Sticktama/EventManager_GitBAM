@@ -37,6 +37,10 @@ class LoginActivity : Activity() {
 
         val app = application as EventManagerApplication
 
+        app.firstname = ""
+        app.lastname = ""
+        app.email = ""
+
         val et_username = findViewById<EditText>(R.id.et_username)
         val et_password = findViewById<EditText>(R.id.et_password)
         val button_login = findViewById<Button>(R.id.button_login)
@@ -63,6 +67,7 @@ class LoginActivity : Activity() {
             startActivityForResult(signInIntent, RC_SIGN_IN)
         }
         */
+
         // Add Forgot Password click listener
         tv_forgot_password.setOnClickListener {
             val intent = Intent(this, ForgotPasswordActivity::class.java)

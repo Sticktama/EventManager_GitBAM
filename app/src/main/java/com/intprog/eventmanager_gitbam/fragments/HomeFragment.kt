@@ -49,12 +49,6 @@ class HomeFragment : Fragment() {
         tv_nav_initial.createProfileAvatar(app.username, tv_nav_avatar)
         tv_nav_username.text = app.username
 
-        // Set up navigation to Event Listing Activity
-        view.findViewById<Button>(R.id.view_events_button).setOnClickListener {
-            val intent = Intent(requireContext(), EventListingActivity::class.java)
-            startActivity(intent)
-        }
-
         // Set up navigation to Event Details for the next event
         view.findViewById<Button>(R.id.next_event_button).setOnClickListener {
             val intent = Intent(requireContext(), EventDetailsActivity::class.java)

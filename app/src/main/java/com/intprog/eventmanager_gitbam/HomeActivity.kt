@@ -79,6 +79,16 @@ class HomeActivity : AppCompatActivity() {
             when (menuItem.itemId) {
                 R.id.drawer_home -> bottomNavigationView.selectedItemId = R.id.navigation_home
                 R.id.drawer_settings -> bottomNavigationView.selectedItemId = R.id.navigation_settings
+                R.id.drawer_simple_organizers -> {
+                    startActivity(
+                        Intent(this, SimpleOrganizerListActivity::class.java)
+                    )
+                }
+                R.id.drawer_custom_organizers -> {
+                    startActivity(
+                        Intent(this, CustomOrganizerListActivity::class.java)
+                    )
+                }
                 R.id.drawer_about -> {
                     val fragment = DevelopersFragment()
                     supportFragmentManager.beginTransaction()
