@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/developer_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Developer Name"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/colorPrimaryDark"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/developer_image"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/ic_profile"
+            app:civ_border_width="3dp"
+            app:civ_border_color="@color/colorPrimaryLight"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:id="@+id/developer_role"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Developer Role"
+                android:textSize="16sp"
+                android:textColor="@color/colorPrimary"/>
+
+            <TextView
+                android:id="@+id/developer_quote"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Developer Quote"
+                android:textSize="14sp"
+                android:textStyle="italic"
+                android:textColor="@android:color/darker_gray"
+                android:layout_marginTop="8dp"/>
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Expertise"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/colorPrimaryDark"
+        android:layout_marginTop="24dp"/>
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/developer_expertise_chips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:chipSpacingHorizontal="8dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Contributions to Event Manager"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/colorPrimaryDark"
+        android:layout_marginTop="24dp"/>
+
+    <TextView
+        android:id="@+id/developer_contributions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Developer contributions details"
+        android:textSize="14sp"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>

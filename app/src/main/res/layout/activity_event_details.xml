@@ -16,15 +16,8 @@
             android:layout_height="200dp"
             android:scaleType="centerCrop"
             android:contentDescription="Event image"
+            android:src="@drawable/events_default"
             android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:id="@+id/detail_event_id"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="#888888"
-            android:layout_marginBottom="8dp" />
 
         <TextView
             android:id="@+id/detail_event_name"
@@ -106,6 +99,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Category: "
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/detail_event_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
@@ -127,8 +137,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Back to Events"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF" />
+            android:background="@drawable/rounded_corner" />
 
     </LinearLayout>
 </ScrollView>

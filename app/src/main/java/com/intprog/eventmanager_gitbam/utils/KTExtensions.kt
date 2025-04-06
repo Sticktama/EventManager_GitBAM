@@ -4,6 +4,7 @@ package com.intprog.eventmanager_gitbam.utils
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.View
+import android.widget.EditText
 import android.widget.TextView
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
 
@@ -40,4 +41,22 @@ fun TextView.createProfileAvatar(username: String, backgroundView: View) {
 
     // Apply the background to the view
     backgroundView.background = shape
+}
+
+fun validateCredentials(value: String, edit: EditText, error: String) {
+    if (value.isEmpty()) {
+        edit.error = "$error cannot be empty"
+    } else if (value.length < 6) {
+        edit.error = "$error must be at least 6 characters"
+    } else if (value.contains(Regex("[^a-zA-Z0-9]"))) {
+        edit.error = "$error should not contain special characters"
+    } else if (!value.matches(Regex("^[a-zA-Z0-9]+$")) ||
+        !value.contains(Regex("[a-zA-Z]")) ||
+        !value.contains(Regex("[0-9]"))) {
+        edit.error = "$error should contain at least one letter and one number"
+    }
+}
+
+fun String.capitalizeInit(): String {
+    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }

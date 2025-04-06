@@ -17,14 +17,6 @@
             android:id="@+id/drawer_about"
             android:icon="@drawable/ic_about"
             android:title="About Us"/>
-        <item
-            android:id="@+id/drawer_simple_organizers"
-            android:icon="@drawable/ic_person"
-            android:title="Organizers (Simple List View)"/>
-        <item
-            android:id="@+id/drawer_custom_organizers"
-            android:icon="@drawable/ic_verify"
-            android:title="Organizers (Custom List View)"/>
     </group>
     <item
         android:title="">

@@ -17,4 +17,10 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="RoundedDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/rounded_dialog_bg</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+    </style>
+
 </resources>

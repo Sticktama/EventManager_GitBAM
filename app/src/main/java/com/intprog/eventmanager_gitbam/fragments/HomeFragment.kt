@@ -8,11 +8,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
-import com.google.android.material.navigation.NavigationView
+import com.google.android.material.navigation.  NavigationView
 import com.intprog.eventmanager_gitbam.EventDetailsActivity
-import com.intprog.eventmanager_gitbam.EventListingActivity
 import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
 import com.intprog.eventmanager_gitbam.utils.createProfileAvatar
@@ -54,37 +52,22 @@ class HomeFragment : Fragment() {
             val intent = Intent(requireContext(), EventDetailsActivity::class.java)
 
             // Pass event details from the "Next Event" card
-            intent.putExtra("EVENT_ID", view.findViewById<TextView>(R.id.next_event_id).text.toString())
-            intent.putExtra("EVENT_NAME", view.findViewById<TextView>(R.id.next_event_name).text.toString())
+            app.eventID = view.findViewById<TextView>(R.id.next_event_id).text.toString().toInt()
+            app.eventName = view.findViewById<TextView>(R.id.next_event_name).text.toString()
 
             // Construct date from the day and month shown on card
             val day = view.findViewById<TextView>(R.id.next_event_day).text.toString()
             val month = view.findViewById<TextView>(R.id.next_event_month).text.toString()
-            intent.putExtra("EVENT_DATE", "2025-${getMonthNumber(month)}-$day")
+            app.eventDate = "2025-${getMonthNumber(month)}-$day"
 
-            intent.putExtra("EVENT_LOCATION", view.findViewById<TextView>(R.id.next_event_location).text.toString())
+            app.eventLocation = view.findViewById<TextView>(R.id.next_event_location).text.toString()
 
             // Default values for fields not shown on the next event card
-            intent.putExtra("EVENT_DESCRIPTION", "Annual music festival featuring local bands and artists")
-            intent.putExtra("EVENT_ORGANIZER", "City Cultural Department")
-            intent.putExtra("EVENT_PRICE", "$25")
-            intent.putExtra("EVENT_PHOTO", R.drawable.events_default)
+            app.eventLocation =  "Annual music festival featuring local bands and artists"
+            app.eventLocation = "City Cultural Department"
+            app.eventPrice = 25
+            app.eventPhoto = R.drawable.events_default
 
-            startActivity(intent)
-        }
-
-        // Set up Quick Actions cards
-        view.findViewById<CardView>(R.id.add_event_button).setOnClickListener {
-            // Add event functionality
-            // For now, we can just navigate to Event Listing
-            val intent = Intent(requireContext(), EventListingActivity::class.java)
-            startActivity(intent)
-        }
-
-        view.findViewById<CardView>(R.id.registrations_button).setOnClickListener {
-            // My registrations functionality
-            // For now, we can just navigate to Event Listing
-            val intent = Intent(requireContext(), EventListingActivity::class.java)
             startActivity(intent)
         }
     }

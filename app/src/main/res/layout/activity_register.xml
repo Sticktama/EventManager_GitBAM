@@ -135,16 +135,31 @@
                     android:drawablePadding="12dp"
                     android:background="@drawable/input_background"
                     android:layout_marginBottom="24dp"/>
-                <Button
-                    android:id="@+id/button_register"
+
+                <!-- Added FrameLayout with Button and ProgressBar similar to login activity -->
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Register"
-                    android:textSize="20sp"
-                    android:background="@drawable/rounded_corner"
-                    android:textColor="@color/white"
-                    android:layout_marginBottom="16dp"/>
-
+                    android:layout_marginBottom="16dp">
+                    <Button
+                        android:id="@+id/button_register"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Register"
+                        android:textSize="20sp"
+                        android:background="@drawable/rounded_corner"
+                        android:textColor="@color/white"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp"/>
+                    <ProgressBar
+                        android:id="@+id/register_progress"
+                        style="?android:attr/progressBarStyleSmall"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_gravity="center"
+                        android:visibility="gone"
+                        android:indeterminateTint="@color/white"/>
+                </FrameLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -156,9 +171,7 @@
                         android:textSize="16sp"
                         android:textColor="@color/cardview_dark_background"
                         android:text="Already have an account? "
-                        android:layout_marginTop="4dp"
-                        />
-
+                        android:layout_marginTop="4dp" />
                     <TextView
                         android:id="@+id/link_login"
                         android:layout_width="wrap_content"

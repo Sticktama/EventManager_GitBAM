@@ -2,7 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="YOUR_API_KEY"/>
 
     <application
         android:name=".app.EventManagerApplication"
@@ -15,6 +20,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NavigationColor"
         tools:targetApi="31">
+        <activity
+            android:name=".LocationPickerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>
         <activity
             android:name=".SimpleOrganizerListActivity"
             android:exported="false" />

@@ -11,6 +11,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.intprog.eventmanager_gitbam.fragments.DevelopersFragment
 import com.intprog.eventmanager_gitbam.fragments.HomeFragment
+import com.intprog.eventmanager_gitbam.fragments.EventListingFragment
 import com.intprog.eventmanager_gitbam.fragments.ProfileFragment
 import com.intprog.eventmanager_gitbam.fragments.SettingsFragment
 
@@ -49,9 +50,7 @@ class HomeActivity : AppCompatActivity() {
             if (itemId == R.id.navigation_home) {
                 selectedFragment = HomeFragment()
             } else if (itemId == R.id.navigation_events) {
-                startActivity(
-                    Intent(this, EventListingActivity::class.java)
-                )
+                selectedFragment = EventListingFragment()
             }
             else if (itemId == R.id.navigation_profile) {
                 selectedFragment = ProfileFragment()
@@ -70,25 +69,27 @@ class HomeActivity : AppCompatActivity() {
 
         navView.setNavigationItemSelectedListener { menuItem ->
             if (menuItem.itemId == R.id.nav_logout) {
-                startActivity(
-                    Intent(this, LogoutActivity::class.java)
-                )
+                val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+                builder.setTitle("Confirm Logout")
+                builder.setMessage("Are you sure you want to log out?")
+                builder.setPositiveButton("Yes") { _, _ ->
+                    // You can clear session data here if needed
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                builder.setNegativeButton("Cancel") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                builder.create().show()
                 return@setNavigationItemSelectedListener true
             }
 
             when (menuItem.itemId) {
                 R.id.drawer_home -> bottomNavigationView.selectedItemId = R.id.navigation_home
                 R.id.drawer_settings -> bottomNavigationView.selectedItemId = R.id.navigation_settings
-                R.id.drawer_simple_organizers -> {
-                    startActivity(
-                        Intent(this, SimpleOrganizerListActivity::class.java)
-                    )
-                }
-                R.id.drawer_custom_organizers -> {
-                    startActivity(
-                        Intent(this, CustomOrganizerListActivity::class.java)
-                    )
-                }
+
                 R.id.drawer_about -> {
                     val fragment = DevelopersFragment()
                     supportFragmentManager.beginTransaction()
@@ -101,5 +102,21 @@ class HomeActivity : AppCompatActivity() {
             drawerLayout.closeDrawers()
             true
         }
+    }
+    override fun onBackPressed() {
+        // Get current fragment
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+
+        // Check if current fragment is EventsFragment and handle back press there first
+        if (currentFragment is EventListingFragment) {
+            val handled = currentFragment.handleBackPress()
+            if (handled) {
+                // Fragment handled the back press, no need to continue
+                return
+            }
+        }
+
+        // Default back press behavior
+        super.onBackPressed()
     }
 }

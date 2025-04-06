@@ -5,55 +5,159 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@android:color/white">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:padding="16dp">
 
+        <!-- Event Image -->
         <ImageView
             android:id="@+id/imageview_event_pic"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
             android:scaleType="centerCrop"
-            android:contentDescription="Event image" />
+            android:src="@drawable/events_default"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Date Badge -->
+        <TextView
+            android:id="@+id/textview_event_date_badge"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="16dp">
+            android:padding="8dp"
+            android:background="@drawable/date_badge_bg"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:text="15 APR"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="16dp"/>
 
-            <TextView
-                android:id="@+id/textview_id"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="#888888" />
+        <!-- Category Chip -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_category"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Conference"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            app:chipBackgroundColor="#3a86ff"
+            app:layout_constraintTop_toBottomOf="@id/imageview_event_pic"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="16dp"/>
 
-            <TextView
-                android:id="@+id/textview_event_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:textColor="#000000" />
+        <!-- Event Name -->
+        <TextView
+            android:id="@+id/textview_event_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:text="Event Name"
+            android:maxLines="2"
+            android:ellipsize="end"
+            app:layout_constraintTop_toBottomOf="@id/chip_category"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp"/>
 
-            <TextView
-                android:id="@+id/textview_event_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:layout_marginTop="4dp" />
+        <!-- Location -->
+        <ImageView
+            android:id="@+id/imageview_location"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_location"
+            app:layout_constraintTop_toBottomOf="@id/textview_event_name"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="8dp"
+            app:tint="#64748B" />
 
-            <TextView
-                android:id="@+id/textview_event_location"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp" />
-        </LinearLayout>
-    </LinearLayout>
+        <TextView
+            android:id="@+id/textview_event_location"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#64748B"
+            android:text="Event Location"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintTop_toBottomOf="@id/textview_event_name"
+            app:layout_constraintStart_toEndOf="@id/imageview_location"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Organizer -->
+        <ImageView
+            android:id="@+id/imageview_organizer"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_person"
+            app:layout_constraintTop_toBottomOf="@id/textview_event_location"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="4dp"
+            app:tint="#64748B" />
+
+        <TextView
+            android:id="@+id/textview_event_organizer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#64748B"
+            android:text="Organizer Name"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintTop_toBottomOf="@id/textview_event_location"
+            app:layout_constraintStart_toEndOf="@id/imageview_organizer"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Price -->
+        <ImageView
+            android:id="@+id/imageview_price"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_price"
+            app:layout_constraintTop_toBottomOf="@id/textview_event_organizer"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="4dp"
+            app:tint="#64748B" />
+
+        <TextView
+            android:id="@+id/textview_event_price"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#64748B"
+            android:text="Free"
+            app:layout_constraintTop_toBottomOf="@id/textview_event_organizer"
+            app:layout_constraintStart_toEndOf="@id/imageview_price"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Delete button that appears on long press -->
+        <ImageButton
+            android:id="@+id/button_delete"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/circular_delete_button"
+            android:src="@drawable/ic_delete"
+            android:contentDescription="Delete event"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_margin="8dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.cardview.widget.CardView>
