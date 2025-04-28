@@ -3,7 +3,7 @@ package com.intprog.eventmanager_gitbam.helper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
+import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -17,8 +17,9 @@ class EventRecyclerViewAdapter(
     private val onDeleteClick: (Int) -> Unit
 ): RecyclerView.Adapter<EventRecyclerViewAdapter.ItemViewHolder>() {
 
-    // Track which items are in delete mode
-    private val itemsInDeleteMode = mutableSetOf<Int>()
+    // Track which items are selected
+    private var isSelectionMode = false
+    private val selectedItems = mutableSetOf<Int>()
 
     class ItemViewHolder(view: View): RecyclerView.ViewHolder(view) {
         val eventImage: ImageView = view.findViewById(R.id.imageview_event_pic)
@@ -28,7 +29,7 @@ class EventRecyclerViewAdapter(
         val eventOrganizer: TextView = view.findViewById(R.id.textview_event_organizer)
         val eventPrice: TextView = view.findViewById(R.id.textview_event_price)
         val categoryChip: Chip = view.findViewById(R.id.chip_category)
-        val deleteButton: ImageButton = view.findViewById(R.id.button_delete)
+        val selectionCheckBox: CheckBox = view.findViewById(R.id.checkbox_select_event)
     }
 
     override fun onCreateViewHolder(
@@ -68,53 +69,72 @@ class EventRecyclerViewAdapter(
         }
         holder.categoryChip.setChipBackgroundColorResource(categoryColor)
 
-        // Set delete button visibility based on delete mode
-        if (position in itemsInDeleteMode) {
-            holder.deleteButton.visibility = View.VISIBLE
-        } else {
-            holder.deleteButton.visibility = View.GONE
-        }
+        // Set checkbox visibility and state based on selection mode
+        holder.selectionCheckBox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+        holder.selectionCheckBox.isChecked = selectedItems.contains(position)
 
         holder.itemView.setOnClickListener {
-            // If in delete mode, exit delete mode
-            if (position in itemsInDeleteMode) {
-                itemsInDeleteMode.remove(position)
-                notifyItemChanged(position)
+            if (isSelectionMode) {
+                toggleSelection(position)
+                holder.selectionCheckBox.isChecked = selectedItems.contains(position)
             } else {
-                // Otherwise, perform normal click action
+                // Perform normal click action
                 onClick(item)
             }
         }
 
-        // Set up long click listener to enter delete mode
+        // Set up long click listener to enter selection mode
         holder.itemView.setOnLongClickListener {
-            if (position !in itemsInDeleteMode) {
-                itemsInDeleteMode.add(position)
-                notifyItemChanged(position)
+            if (!isSelectionMode) {
+                enterSelectionMode()
+                toggleSelection(position)
+                holder.selectionCheckBox.isChecked = true
             }
             true
         }
 
-        holder.deleteButton.setOnClickListener {
-            onDeleteClick(position)
-            itemsInDeleteMode.remove(position)
+        holder.selectionCheckBox.setOnClickListener {
+            toggleSelection(position)
+        }
+    }
+
+    private fun toggleSelection(position: Int) {
+        if (selectedItems.contains(position)) {
+            selectedItems.remove(position)
+        } else {
+            selectedItems.add(position)
+        }
+        notifyItemChanged(position)
+        
+        // If no items are selected, exit selection mode
+        if (selectedItems.isEmpty()) {
+            exitSelectionMode()
         }
     }
 
     override fun getItemCount(): Int = listOfEvents.size
 
-    // Method to exit delete mode for all items
-    fun isInDeleteMode(): Boolean {
-        return itemsInDeleteMode.isNotEmpty()
+    // Methods to handle selection mode
+    fun isInSelectionMode(): Boolean {
+        return isSelectionMode
     }
 
-    fun exitDeleteMode() {
-        val affectedPositions = itemsInDeleteMode.toList()
-        itemsInDeleteMode.clear()
-        affectedPositions.forEach { position ->
-            if (position < itemCount) {
-                notifyItemChanged(position)
-            }
+    fun enterSelectionMode() {
+        if (!isSelectionMode) {
+            isSelectionMode = true
+            notifyDataSetChanged()
         }
+    }
+    
+    fun exitSelectionMode() {
+        if (isSelectionMode) {
+            isSelectionMode = false
+            selectedItems.clear()
+            notifyDataSetChanged()
+        }
+    }
+    
+    fun getSelectedItems(): List<Int> {
+        return selectedItems.toList().sortedDescending() // Sort to delete from end to beginning
     }
 }

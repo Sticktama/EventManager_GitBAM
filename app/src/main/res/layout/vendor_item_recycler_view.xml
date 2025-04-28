@@ -23,16 +23,14 @@
                 android:scaleType="centerCrop"
                 android:src="@drawable/events_default" />
 
-            <ImageView
-                android:id="@+id/delete_vendor_button"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+            <CheckBox
+                android:id="@+id/checkbox_select_vendor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="top|end"
                 android:layout_margin="8dp"
-                android:background="@drawable/circular_delete_button"
-                android:padding="4dp"
-                android:src="@android:drawable/ic_menu_delete"
-                android:visibility="gone" />
+                android:visibility="gone"
+                android:buttonTint="@android:color/white" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/vendor_category"
