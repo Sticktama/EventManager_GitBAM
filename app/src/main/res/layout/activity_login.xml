@@ -81,14 +81,59 @@
                 android:indeterminateTint="@color/white"/>
         </FrameLayout>
 
-        <!-- Google Sign In (commented out for now) -->
-
-        <com.google.android.gms.common.SignInButton
-            android:id="@+id/button_google_signin"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp">
 
+            <androidx.cardview.widget.CardView
+                android:id="@+id/button_google_signin"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/white">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_centerInParent="true">
+
+                        <ImageView
+                            android:id="@+id/google_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_google_logo" />
+
+                        <TextView
+                            android:id="@+id/google_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Sign in with Google"
+                            android:textSize="16sp"
+                            android:textColor="#5F6368"
+                            android:paddingStart="16dp"
+                            android:fontFamily="sans-serif-medium" />
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/google_signin_progress"
+                        style="?android:attr/progressBarStyle"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerInParent="true"
+                        android:visibility="gone" />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

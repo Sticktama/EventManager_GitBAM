@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <meta-data
         android:name="com.google.android.geo.API_KEY"
@@ -21,6 +22,9 @@
         android:theme="@style/Theme.NavigationColor"
         tools:targetApi="31">
         <activity
+            android:name=".VendorDetailsActivity"
+            android:exported="false" />
+        <activity
             android:name=".LocationPickerActivity"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>
@@ -35,9 +39,6 @@
             android:exported="false" />
         <activity
             android:name=".EventDetailsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".EventListingActivity"
             android:exported="false" />
         <activity
             android:name=".RegisterActivity"
@@ -59,6 +60,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCHf7X0jKkx2h0ceUJ4S7l2Pa-l95P1qwA"/>
     </application>
 
 </manifest>

@@ -42,7 +42,7 @@ class LocationPickerActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Initialize Places API
         if (!Places.isInitialized()) {
-            Places.initialize(applicationContext, "AIzaSyCHf7X0jKkx2h0ceUJ4S7l2Pa-l95P1qwA")
+            Places.initialize(applicationContext, "AIzaSyA3gZu1RwmUZzNngc2l9tTVXWj2A1Ir3F0")
         }
 
         // Initialize FusedLocationProviderClient

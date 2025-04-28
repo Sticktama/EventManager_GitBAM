@@ -21,6 +21,7 @@ import com.intprog.eventmanager_gitbam.LogoutActivity
 import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
 import com.intprog.eventmanager_gitbam.utils.capitalizeInit
+import com.intprog.eventmanager_gitbam.utils.signOut
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -78,10 +79,7 @@ class SettingsFragment : Fragment() {
             builder.setTitle("Confirm Logout")
             builder.setMessage("Are you sure you want to log out?")
             builder.setPositiveButton("Yes") { _, _ ->
-                // You can clear session data here if needed
-                val intent = Intent(requireContext(), LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
+                signOut()
             }
             builder.setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()

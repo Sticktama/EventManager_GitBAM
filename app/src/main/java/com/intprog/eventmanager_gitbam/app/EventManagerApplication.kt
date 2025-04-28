@@ -77,4 +77,47 @@ class EventManagerApplication : Application() {
         get() = _eventPhoto
         set(value) { _eventPhoto = value }
 
+    //vendor details
+    private var _vendorID: Int = 1
+    var vendorID: Int
+        get() = _vendorID
+        set(value) { _vendorID = value }
+    private var _vendorName: String = ""
+    var vendorName: String
+        get() = _vendorName
+        set(value) { _vendorName = value }
+    private var _vendorCategory: String = ""
+    var vendorCategory: String
+        get() = _vendorCategory
+        set(value) { _vendorCategory = value }
+    private var _vendorLocation: String = ""
+    var vendorLocation: String
+        get() = _vendorLocation
+        set(value) { _vendorLocation = value }
+    private var _vendorDescription: String = ""
+    var vendorDescription: String
+        get() = _vendorDescription
+        set(value) { _vendorDescription = value }
+    private var _vendorRating: Float = 0f
+    var vendorRating: Float
+        get() = _vendorRating
+        set(value) { _vendorRating = value }
+    private var _vendorPrice: Int = 0
+    var vendorPrice: Int
+        get() = _vendorPrice
+        set(value) { _vendorPrice = value }
+    private var _vendorContact: String = ""
+    var vendorContact: String
+        get() = _vendorContact
+        set(value) { _vendorContact = value }
+    private var _vendorPhoto: Int = 0
+    var vendorPhoto: Int
+        get() = _vendorPhoto
+        set(value) { _vendorPhoto = value }
+
+    //notification flags
+    private var _hasUnreadNotifications: Boolean = false
+    var hasUnreadNotifications: Boolean
+        get() = _hasUnreadNotifications
+        set(value) { _hasUnreadNotifications = value }
 }

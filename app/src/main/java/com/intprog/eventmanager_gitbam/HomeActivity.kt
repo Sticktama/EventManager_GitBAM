@@ -14,16 +14,26 @@ import com.intprog.eventmanager_gitbam.fragments.HomeFragment
 import com.intprog.eventmanager_gitbam.fragments.EventListingFragment
 import com.intprog.eventmanager_gitbam.fragments.ProfileFragment
 import com.intprog.eventmanager_gitbam.fragments.SettingsFragment
+import com.intprog.eventmanager_gitbam.fragments.VendorListingFragment
+import androidx.credentials.CredentialManager
+import com.intprog.eventmanager_gitbam.app.EventManagerApplication
+import androidx.credentials.ClearCredentialStateRequest
+import com.intprog.eventmanager_gitbam.utils.signOut
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class HomeActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
+    private lateinit var credentialManager: CredentialManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
+        credentialManager = CredentialManager.create(this)
 
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -52,6 +62,9 @@ class HomeActivity : AppCompatActivity() {
             } else if (itemId == R.id.navigation_events) {
                 selectedFragment = EventListingFragment()
             }
+            else if (itemId == R.id.navigation_vendors) {
+                selectedFragment = VendorListingFragment()
+            }
             else if (itemId == R.id.navigation_profile) {
                 selectedFragment = ProfileFragment()
             }
@@ -73,11 +86,7 @@ class HomeActivity : AppCompatActivity() {
                 builder.setTitle("Confirm Logout")
                 builder.setMessage("Are you sure you want to log out?")
                 builder.setPositiveButton("Yes") { _, _ ->
-                    // You can clear session data here if needed
-                    val intent = Intent(this, LoginActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
+                    signOut()
                 }
                 builder.setNegativeButton("Cancel") { dialog, _ ->
                     dialog.dismiss()
@@ -89,6 +98,7 @@ class HomeActivity : AppCompatActivity() {
             when (menuItem.itemId) {
                 R.id.drawer_home -> bottomNavigationView.selectedItemId = R.id.navigation_home
                 R.id.drawer_settings -> bottomNavigationView.selectedItemId = R.id.navigation_settings
+                R.id.drawer_vendors -> bottomNavigationView.selectedItemId = R.id.navigation_vendors
 
                 R.id.drawer_about -> {
                     val fragment = DevelopersFragment()
@@ -109,6 +119,12 @@ class HomeActivity : AppCompatActivity() {
 
         // Check if current fragment is EventsFragment and handle back press there first
         if (currentFragment is EventListingFragment) {
+            val handled = currentFragment.handleBackPress()
+            if (handled) {
+                // Fragment handled the back press, no need to continue
+                return
+            }
+        } else if (currentFragment is VendorListingFragment) {
             val handled = currentFragment.handleBackPress()
             if (handled) {
                 // Fragment handled the back press, no need to continue

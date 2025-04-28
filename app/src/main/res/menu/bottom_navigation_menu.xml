@@ -9,6 +9,10 @@
         android:icon="@drawable/ic_events"
         android:title="Events" />
     <item
+        android:id="@+id/navigation_vendors"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Vendors" />
+    <item
         android:id="@+id/navigation_profile"
         android:icon="@drawable/ic_person"
         android:title="Profile" />

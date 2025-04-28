@@ -1,5 +1,6 @@
 package com.intprog.eventmanager_gitbam.fragments
 
+import DeleteWithBodyRequest
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Intent
@@ -33,6 +34,8 @@ import com.intprog.eventmanager_gitbam.helper.EventRecyclerViewAdapter
 import com.intprog.eventmanager_gitbam.LocationPickerActivity
 import org.json.JSONException
 import org.json.JSONObject
+import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -372,45 +375,13 @@ class EventListingFragment : Fragment() {
         // Check if fragment is attached
         if (!isAdded) return
 
-        val removedItem = eventsList.removeAt(position)
-        adapter.notifyItemRemoved(position)
-        adapter.notifyItemRangeChanged(position, eventsList.size)
 
-        Toast.makeText(
-            requireContext(),
-            "Event ${removedItem.eventName} has been removed.",
-            Toast.LENGTH_SHORT
-        ).show()
 
-        // No delete API implementation yet, keeping the commented code for future reference
-        /*
-        val url = "https://sysarch.glitch.me/api/event/$eventId"
 
-        val jsonObjectRequest = JsonObjectRequest(
-            Request.Method.DELETE, url, null,
-            { response ->
-                try {
-                    val message = response.getString("message")
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
-                }
-            },
-            { error ->
-                val errorMessage = when (error.networkResponse?.statusCode) {
-                    404 -> "Event not found"
-                    500 -> "Server error"
-                    else -> "Error deleting event: ${error.message}"
-                }
-                Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
-            }
-        ).apply {
-            tag = TAG
-        }
+        val app = requireActivity().application as EventManagerApplication
+        val url = "https://sysarch.glitch.me/api/event-users"
 
-        requestQueue.add(jsonObjectRequest)
-        */
+        
     }
 
     override fun onDestroy() {
