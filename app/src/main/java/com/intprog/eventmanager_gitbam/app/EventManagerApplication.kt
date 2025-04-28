@@ -76,6 +76,15 @@ class EventManagerApplication : Application() {
     var eventPhoto: Int
         get() = _eventPhoto
         set(value) { _eventPhoto = value }
+    private var _eventImageUrl: String = ""
+    var eventImageUrl: String
+        get() = _eventImageUrl
+        set(value) { _eventImageUrl = value }
+
+    private var _eventDetailImageUrl: String = ""
+    var eventDetailImageUrl: String
+        get() = _eventDetailImageUrl
+        set(value) { _eventDetailImageUrl = value }
 
     //vendor details
     private var _vendorID: Int = 1

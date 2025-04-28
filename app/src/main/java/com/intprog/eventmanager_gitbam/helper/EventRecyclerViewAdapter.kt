@@ -7,6 +7,7 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
 import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.data.Event
@@ -20,6 +21,8 @@ class EventRecyclerViewAdapter(
     // Track which items are selected
     private var isSelectionMode = false
     private val selectedItems = mutableSetOf<Int>()
+    private var selectionModeListener: (() -> Unit)? = null
+    private var clearSelectionModeListener: (() -> Unit)? = null
 
     class ItemViewHolder(view: View): RecyclerView.ViewHolder(view) {
         val eventImage: ImageView = view.findViewById(R.id.imageview_event_pic)
@@ -56,6 +59,17 @@ class EventRecyclerViewAdapter(
         holder.eventPrice.text = if (item.ticketPrice > 0) "₱${item.ticketPrice}" else "Free"
         holder.categoryChip.text = item.category
 
+        if (item.imageUrl.isNotEmpty()) {
+            Glide.with(holder.itemView.context)
+                .load(item.imageUrl)
+                .placeholder(R.drawable.events_default)
+                .error(R.drawable.events_default)
+                .into(holder.eventImage)
+        } else {
+            // Fall back to resource image if no URL
+            holder.eventImage.setImageResource(item.photo)
+        }
+
         // Set category chip color based on category
         val categoryColor = when (item.category.lowercase()) {
             "conference" -> R.color.blue
@@ -72,6 +86,7 @@ class EventRecyclerViewAdapter(
         // Set checkbox visibility and state based on selection mode
         holder.selectionCheckBox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
         holder.selectionCheckBox.isChecked = selectedItems.contains(position)
+
 
         holder.itemView.setOnClickListener {
             if (isSelectionMode) {
@@ -123,18 +138,28 @@ class EventRecyclerViewAdapter(
         if (!isSelectionMode) {
             isSelectionMode = true
             notifyDataSetChanged()
+            selectionModeListener?.invoke()
         }
     }
-    
+
     fun exitSelectionMode() {
         if (isSelectionMode) {
             isSelectionMode = false
             selectedItems.clear()
             notifyDataSetChanged()
+            clearSelectionModeListener?.invoke()
         }
     }
     
     fun getSelectedItems(): List<Int> {
         return selectedItems.toList().sortedDescending() // Sort to delete from end to beginning
+    }
+
+    fun setSelectionModeListener(listener: () -> Unit) {
+        selectionModeListener = listener
+    }
+
+    fun setClearSelectionModeListener(listener: () -> Unit) {
+        clearSelectionModeListener = listener
     }
 }

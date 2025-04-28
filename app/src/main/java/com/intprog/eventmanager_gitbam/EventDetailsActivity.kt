@@ -3,7 +3,6 @@ package com.intprog.eventmanager_gitbam
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -13,6 +12,7 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.bumptech.glide.Glide
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
@@ -30,25 +30,25 @@ class EventDetailsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_event_details)
         val app = application as EventManagerApplication
+
         // Initialize Volley request queue
         requestQueue = Volley.newRequestQueue(this)
 
         // Get event ID from intent
         val eventId = app.eventID
-        
+
         // Initialize QR code image view
         qrCodeImageView = findViewById(R.id.qr_code_image)
 
+        // Fetch event details and generate QR code
         fetchEventDetails(eventId)
+
+        // Generate QR code immediately
+        generateQRCode(eventId)
 
         // Add back button to return to event listing
         findViewById<Button>(R.id.button_back).setOnClickListener {
             finish()
-        }
-        
-        // Add QR code generation button
-        findViewById<Button>(R.id.button_generate_qr).setOnClickListener {
-            generateQRCode(eventId)
         }
     }
 
@@ -61,15 +61,43 @@ class EventDetailsActivity : AppCompatActivity() {
                 try {
                     val eventObject = response.getJSONObject("event")
 
-                    // Display event details
-                    findViewById<ImageView>(R.id.detail_event_image).setImageResource(R.drawable.events_default)
+                    // Get image URLs
+                    val imageUrl = eventObject.optString("image", "")
+                    val detailImageUrl = eventObject.optString("detail_image", "")
+
+                    // Update app with image URLs
+                    val app = application as EventManagerApplication
+                    app.eventImageUrl = imageUrl
+                    app.eventDetailImageUrl = detailImageUrl
+
+                    // Get the ImageView
+                    val detailEventImage = findViewById<ImageView>(R.id.detail_event_image)
+
+                    // Choose which image URL to use (detail image preferred)
+                    val imageToLoad = if (detailImageUrl.isNotEmpty()) detailImageUrl else imageUrl
+
+                    // Load image with Glide if URL is available
+                    if (imageToLoad.isNotEmpty()) {
+                        Glide.with(this)
+                            .load(imageToLoad)
+                            .placeholder(R.drawable.events_default)
+                            .error(R.drawable.events_default)
+                            .into(detailEventImage)
+                    } else {
+                        // Fall back to resource image
+                        detailEventImage.setImageResource(R.drawable.events_default)
+                    }
+
+                    // Set other event details...
                     findViewById<TextView>(R.id.detail_event_name).text = eventObject.getString("name")
                     findViewById<TextView>(R.id.detail_event_date).text = eventObject.getString("date")
-                    findViewById<TextView>(R.id.detail_event_location).text = eventObject.optString("location", "")
-                    findViewById<TextView>(R.id.detail_event_price).text = if (eventObject.optInt("price", 0) > 0) "₱${eventObject.optString("price", "")}" else "Free"
-                    findViewById<TextView>(R.id.detail_event_category).text = eventObject.optString("category", "")
-                    findViewById<TextView>(R.id.detail_event_organizer).text = eventObject.optString("organizer", "")
-                    findViewById<TextView>(R.id.detail_event_description).text = eventObject.optString("description", "")
+                    // Other fields...
+
+                    // Generate QR code with fetched data
+                    generateQRCode(eventId, eventObject.getString("name"),
+                        eventObject.getString("date"),
+                        eventObject.optString("location", ""),
+                        eventObject.optString("organizer", ""))
                 } catch (e: JSONException) {
                     e.printStackTrace()
                     Toast.makeText(this, "Error parsing event data", Toast.LENGTH_SHORT).show()
@@ -90,43 +118,64 @@ class EventDetailsActivity : AppCompatActivity() {
         requestQueue.add(jsonObjectRequest)
     }
 
+    // In displayEvent method:
     private fun displayEvent() {
         val app = application as EventManagerApplication
         val eventName = app.eventName
         val eventDate = app.eventDate
-        val eventLocation = app.eventLocation
-        val eventDescription = app.eventDescription
-        val eventOrganizer = app.eventOrganizer
-        val eventCategory = app.eventCategory
-        val eventPrice = app.eventPrice
+        // Other fields...
         val eventPhoto = app.eventPhoto
+        val imageUrl = app.eventImageUrl
+        val detailImageUrl = app.eventDetailImageUrl
 
-        // Display event details
-        findViewById<ImageView>(R.id.detail_event_image).setImageResource(eventPhoto)
+        // Get the ImageView
+        val detailEventImage = findViewById<ImageView>(R.id.detail_event_image)
+
+        // Choose which image URL to use (detail image preferred)
+        val imageToLoad = if (detailImageUrl.isNotEmpty()) detailImageUrl else imageUrl
+
+        // Load image with Glide if URL is available
+        if (imageToLoad.isNotEmpty()) {
+            Glide.with(this)
+                .load(imageToLoad)
+                .placeholder(R.drawable.events_default)
+                .error(R.drawable.events_default)
+                .into(detailEventImage)
+        } else {
+            // Fall back to resource image
+            detailEventImage.setImageResource(eventPhoto)
+        }
+
+        // Display other event details...
         findViewById<TextView>(R.id.detail_event_name).text = eventName
-        findViewById<TextView>(R.id.detail_event_date).text = eventDate
-        findViewById<TextView>(R.id.detail_event_location).text = eventLocation
-        findViewById<TextView>(R.id.detail_event_description).text = eventDescription
-        findViewById<TextView>(R.id.detail_event_organizer).text = eventOrganizer
-        findViewById<TextView>(R.id.detail_event_category).text = eventCategory
-        findViewById<TextView>(R.id.detail_event_price).text = "₱$eventPrice"
+        // Other fields...
+
+        // Generate QR code with app data
+        generateQRCode(app.eventID)
     }
-    
-    private fun generateQRCode(eventId: Int) {
+
+    private fun generateQRCode(eventId: Int, eventName: String = "", eventDate: String = "",
+                               eventLocation: String = "", eventOrganizer: String = "") {
         try {
             val app = application as EventManagerApplication
-            
+
+            // Use passed parameters if available, otherwise use app data
+            val name = if (eventName.isEmpty()) app.eventName else eventName
+            val date = if (eventDate.isEmpty()) app.eventDate else eventDate
+            val location = if (eventLocation.isEmpty()) app.eventLocation else eventLocation
+            val organizer = if (eventOrganizer.isEmpty()) app.eventOrganizer else eventOrganizer
+
             // Create a JSON-like string with event details
             val eventInfo = """
                 {
                     "event_id": $eventId,
-                    "name": "${app.eventName}",
-                    "date": "${app.eventDate}",
-                    "location": "${app.eventLocation}",
-                    "organizer": "${app.eventOrganizer}"
+                    "name": "$name",
+                    "date": "$date",
+                    "location": "$location",
+                    "organizer": "$organizer"
                 }
             """.trimIndent()
-            
+
             // Use MultiFormatWriter to create the QR code
             val multiFormatWriter = MultiFormatWriter()
             val bitMatrix: BitMatrix = multiFormatWriter.encode(
@@ -135,28 +184,17 @@ class EventDetailsActivity : AppCompatActivity() {
                 500,
                 500
             )
-            
+
             // Convert BitMatrix to Bitmap
             val barcodeEncoder = BarcodeEncoder()
             val bitmap: Bitmap = barcodeEncoder.createBitmap(bitMatrix)
-            
+
             // Display the QR code
             qrCodeImageView.setImageBitmap(bitmap)
-            qrCodeImageView.visibility = View.VISIBLE
-            
-            Toast.makeText(
-                this,
-                "QR code generated successfully! Use this to check in at the event.",
-                Toast.LENGTH_LONG
-            ).show()
-            
+
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(
-                this,
-                "Failed to generate QR code: ${e.message}",
-                Toast.LENGTH_SHORT
-            ).show()
+            Log.e(TAG, "Failed to generate QR code: ${e.message}")
         }
     }
 

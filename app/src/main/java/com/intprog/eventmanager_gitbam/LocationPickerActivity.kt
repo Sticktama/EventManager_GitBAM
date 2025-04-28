@@ -1,9 +1,12 @@
 package com.intprog.eventmanager_gitbam
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -28,6 +31,7 @@ class LocationPickerActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var selectedLocation: LatLng? = null
     private var selectedPlaceName: String? = null
+    private val TAG = "LocationPickerActivity"
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -40,7 +44,7 @@ class LocationPickerActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_location_picker)
 
-        // Initialize Places API
+        // Initialize Places API - be sure to replace with your actual API key
         if (!Places.isInitialized()) {
             Places.initialize(applicationContext, "AIzaSyA3gZu1RwmUZzNngc2l9tTVXWj2A1Ir3F0")
         }
@@ -54,32 +58,40 @@ class LocationPickerActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         // Set up the Places Autocomplete
-        val autocompleteFragment = supportFragmentManager
-            .findFragmentById(R.id.autocomplete_fragment) as AutocompleteSupportFragment
-        autocompleteFragment.setPlaceFields(listOf(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG))
-        autocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
-            override fun onPlaceSelected(place: Place) {
-                selectedLocation = place.latLng
-                selectedPlaceName = place.name
-                map.clear()
-                map.addMarker(MarkerOptions().position(place.latLng!!).title(place.name))
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(place.latLng!!, 15f))
-            }
+        try {
+            val autocompleteFragment = supportFragmentManager
+                .findFragmentById(R.id.autocomplete_fragment) as AutocompleteSupportFragment
+            autocompleteFragment.setPlaceFields(listOf(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG))
+            autocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
+                override fun onPlaceSelected(place: Place) {
+                    place.latLng?.let { latLng ->
+                        selectedLocation = latLng
+                        selectedPlaceName = place.name
+                        map.clear()
+                        map.addMarker(MarkerOptions().position(latLng).title(place.name))
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                    }
+                }
 
-            override fun onError(status: com.google.android.gms.common.api.Status) {
-                Toast.makeText(this@LocationPickerActivity, "Error: ${status.statusMessage}", Toast.LENGTH_SHORT).show()
-            }
-        })
+                override fun onError(status: com.google.android.gms.common.api.Status) {
+                    Log.e(TAG, "Place selection error: ${status.statusMessage}")
+                    Toast.makeText(this@LocationPickerActivity, "Error: ${status.statusMessage}", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting up autocomplete fragment: ${e.message}")
+            Toast.makeText(this, "Error setting up location search", Toast.LENGTH_SHORT).show()
+        }
 
         // Set up the confirm button
         findViewById<FloatingActionButton>(R.id.fab_confirm_location).setOnClickListener {
             if (selectedLocation != null) {
-                val resultIntent = intent.apply {
+                val resultIntent = Intent().apply {
                     putExtra(EXTRA_LATITUDE, selectedLocation!!.latitude)
                     putExtra(EXTRA_LONGITUDE, selectedLocation!!.longitude)
-                    putExtra(EXTRA_PLACE_NAME, selectedPlaceName)
+                    putExtra(EXTRA_PLACE_NAME, selectedPlaceName ?: "Selected Location")
                 }
-                setResult(RESULT_OK, resultIntent)
+                setResult(Activity.RESULT_OK, resultIntent)
                 finish()
             } else {
                 Toast.makeText(this, "Please select a location", Toast.LENGTH_SHORT).show()
@@ -93,8 +105,12 @@ class LocationPickerActivity : AppCompatActivity(), OnMapReadyCallback {
         // Check for location permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
-            map.isMyLocationEnabled = true
-            getLastKnownLocation()
+            try {
+                map.isMyLocationEnabled = true
+                getLastKnownLocation()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error enabling my location: ${e.message}")
+            }
         } else {
             ActivityCompat.requestPermissions(
                 this,
@@ -106,24 +122,32 @@ class LocationPickerActivity : AppCompatActivity(), OnMapReadyCallback {
         // Set up map click listener
         map.setOnMapClickListener { latLng ->
             selectedLocation = latLng
+            selectedPlaceName = "${latLng.latitude.toFloat()}, ${latLng.longitude.toFloat()}"
             map.clear()
-            map.addMarker(MarkerOptions().position(latLng))
+            map.addMarker(MarkerOptions().position(latLng).title(selectedPlaceName))
         }
     }
 
     private fun getLastKnownLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    location?.let {
-                        val currentLatLng = LatLng(it.latitude, it.longitude)
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+        try {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        location?.let {
+                            val currentLatLng = LatLng(it.latitude, it.longitude)
+                            map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                        }
                     }
-                }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error getting last location: ${e.message}")
+                    }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception getting last location: ${e.message}")
         }
     }
 
@@ -135,13 +159,17 @@ class LocationPickerActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    map.isMyLocationEnabled = true
-                    getLastKnownLocation()
+                try {
+                    if (ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        map.isMyLocationEnabled = true
+                        getLastKnownLocation()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error in permission result: ${e.message}")
                 }
             } else {
                 Toast.makeText(this, "Location permission is required", Toast.LENGTH_SHORT).show()

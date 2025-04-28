@@ -349,7 +349,7 @@ class VendorListingFragment : Fragment() {
 
         builder.setNegativeButton("Cancel") { _, _ ->
             // Exit delete mode when canceled
-            adapter.exitDeleteMode()
+            adapter.exitSelectionMode()
         }
 
         builder.show()
@@ -357,8 +357,8 @@ class VendorListingFragment : Fragment() {
 
     // Handle back button press in the fragment (to be called from containing activity)
     fun handleBackPress(): Boolean {
-        return if (::adapter.isInitialized && adapter.isInDeleteMode()) {
-            adapter.exitDeleteMode()
+        return if (::adapter.isInitialized && adapter.isInSelectionMode()) {
+            adapter.exitSelectionMode()
             true // We handled the back press
         } else {
             false // Let the activity handle the back press
@@ -461,7 +461,7 @@ class VendorListingFragment : Fragment() {
         // Remove vendor locally for demo purposes
         vendorsList.removeAt(position)
         adapter.notifyItemRemoved(position)
-        adapter.exitDeleteMode()
+        adapter.exitSelectionMode()
         
         // In a real implementation, this would call the API to delete the vendor
         // For now, we just show a toast

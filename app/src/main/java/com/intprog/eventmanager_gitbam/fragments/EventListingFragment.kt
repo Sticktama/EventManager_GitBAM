@@ -9,6 +9,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
@@ -26,6 +28,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.intprog.eventmanager_gitbam.EventDetailsActivity
 import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
@@ -38,6 +41,9 @@ import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
+import android.view.ActionMode
+import android.view.Menu
+import android.view.MenuItem
 
 class EventListingFragment : Fragment() {
 
@@ -46,6 +52,8 @@ class EventListingFragment : Fragment() {
     private lateinit var requestQueue: RequestQueue
     private val TAG = "EventsFragment"
     private var addEventDialog: AlertDialog? = null
+    private var actionMode: ActionMode? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -93,7 +101,20 @@ class EventListingFragment : Fragment() {
             }
         )
 
+        adapter.setSelectionModeListener {
+            // Start action mode when selection mode is entered
+            if (actionMode == null) {
+                actionMode = activity?.startActionMode(actionModeCallback)
+            }
+        }
+
+        adapter.setClearSelectionModeListener {
+            // End action mode when selection mode is exited
+            actionMode?.finish()
+        }
+
         recyclerView.adapter = adapter
+
 
         // Load events from API
         fetchEvents()
@@ -121,6 +142,10 @@ class EventListingFragment : Fragment() {
                         val date = inputFormat.parse(eventObject.getString("date"))
                         val formattedDate = outputFormat.format(date)
 
+                        // Get image URLs from response, default to empty string if not present
+                        val imageUrl = eventObject.optString("image", "")
+                        val detailImageUrl = eventObject.optString("detail_image", "")
+
                         // Create Event object from JSON
                         val event = Event(
                             id = eventObject.getInt("event_id"),
@@ -130,8 +155,10 @@ class EventListingFragment : Fragment() {
                             description = eventObject.optString("description", ""),
                             organizer = eventObject.optString("organizer", ""),
                             ticketPrice = eventObject.optInt("price", 0),
-                            photo = R.drawable.events_default, // Default image
-                            category = eventObject.optString("category", "Uncategorized")
+                            photo = R.drawable.events_default, // Default image as fallback
+                            category = eventObject.optString("category", "Uncategorized"),
+                            imageUrl = imageUrl,
+                            detailImageUrl = detailImageUrl
                         )
 
                         eventsList.add(event)
@@ -166,18 +193,38 @@ class EventListingFragment : Fragment() {
 
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_event, null)
 
+        // Get references to all input fields
         val eventNameEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_name)
         val eventDateEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_date)
+        val eventLocationLayout = dialogView.findViewById<TextInputLayout>(R.id.layout_event_location)
         val eventLocationEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_location)
         val eventDescriptionEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_description)
         val eventOrganizerEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_organizer)
-        val eventCategoryEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_category)
         val eventPriceEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_price)
         val eventImageEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_image)
         val eventDetailImageEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_event_detail_image)
         val eventImagePreview = dialogView.findViewById<ImageView>(R.id.imageview_event_preview)
         val eventDetailImagePreview = dialogView.findViewById<ImageView>(R.id.imageview_event_detail_preview)
         val pickLocationButton = dialogView.findViewById<MaterialButton>(R.id.button_pick_location)
+
+        // Category related fields
+        val categoryDropdown = dialogView.findViewById<AutoCompleteTextView>(R.id.dropdown_event_category)
+        val otherCategoryLayout = dialogView.findViewById<TextInputLayout>(R.id.layout_other_category)
+        val otherCategoryEditText = dialogView.findViewById<TextInputEditText>(R.id.edittext_other_category)
+
+        // Set up category dropdown with predefined options
+        val categories = arrayOf("Conference", "Workshop", "Seminar", "Exhibition", "Concert", "Sports", "Networking", "Other")
+        val categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, categories)
+        categoryDropdown.setAdapter(categoryAdapter)
+
+        // Listen for category selection to show/hide "Other" field
+        categoryDropdown.setOnItemClickListener { _, _, position, _ ->
+            if (categories[position] == "Other") {
+                otherCategoryLayout.visibility = View.VISIBLE
+            } else {
+                otherCategoryLayout.visibility = View.GONE
+            }
+        }
 
         // Set up date picker
         eventDateEditText.setOnClickListener {
@@ -233,7 +280,15 @@ class EventListingFragment : Fragment() {
                 val eventLocation = eventLocationEditText.text.toString()
                 val eventDescription = eventDescriptionEditText.text.toString()
                 val eventOrganizer = eventOrganizerEditText.text.toString()
-                val eventCategory = eventCategoryEditText.text.toString()
+
+                // Get category based on selection
+                val selectedCategory = categoryDropdown.text.toString()
+                val eventCategory = if (selectedCategory == "Other") {
+                    otherCategoryEditText.text.toString()
+                } else {
+                    selectedCategory
+                }
+
                 val eventPrice = eventPriceEditText.text.toString().toIntOrNull() ?: 0
                 val eventImage = eventImageEditText.text.toString()
                 val eventDetailImage = eventDetailImageEditText.text.toString()
@@ -269,10 +324,14 @@ class EventListingFragment : Fragment() {
             val latitude = data?.getDoubleExtra(LocationPickerActivity.EXTRA_LATITUDE, 0.0)
             val longitude = data?.getDoubleExtra(LocationPickerActivity.EXTRA_LONGITUDE, 0.0)
 
-            // Update the location field in the dialog
+            // Update the location field in the dialog and make it visible
             addEventDialog?.let { dialog ->
                 if (dialog.isShowing) {
+                    val locationLayout = dialog.findViewById<TextInputLayout>(R.id.layout_event_location)
                     val locationEditText = dialog.findViewById<TextInputEditText>(R.id.edittext_event_location)
+
+                    // Make location field visible now that a location has been selected
+                    locationLayout?.visibility = View.VISIBLE
                     locationEditText?.setText(placeName)
                 }
             }
@@ -293,7 +352,7 @@ class EventListingFragment : Fragment() {
 
         builder.setNegativeButton("Cancel") { _, _ ->
             // Exit delete mode when canceled
-            adapter.exitDeleteMode()
+            adapter.exitSelectionMode()
         }
 
         builder.show()
@@ -301,8 +360,8 @@ class EventListingFragment : Fragment() {
 
     // Handle back button press in the fragment (to be called from containing activity)
     fun handleBackPress(): Boolean {
-        return if (::adapter.isInitialized && adapter.isInDeleteMode()) {
-            adapter.exitDeleteMode()
+        return if (::adapter.isInitialized && adapter.isInSelectionMode()) {
+            adapter.exitSelectionMode()
             true // We handled the back press
         } else {
             false // Let the activity handle the back press
@@ -371,17 +430,152 @@ class EventListingFragment : Fragment() {
         requestQueue.add(jsonObjectRequest)
     }
 
-    private fun deleteEvent(eventId: Int, position: Int) {
-        // Check if fragment is attached
+    private val actionModeCallback = object : ActionMode.Callback {
+        override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+            // Inflate the menu for action mode
+            mode.menuInflater.inflate(R.menu.menu_event_selection, menu)
+            return true
+        }
+
+        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
+            return false // Return false if nothing is done
+        }
+
+        override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+            return when (item.itemId) {
+                R.id.action_delete -> {
+                    // Handle delete for all selected items
+                    val selectedItems = adapter.getSelectedItems()
+                    if (selectedItems.isNotEmpty()) {
+                        showDeleteMultipleEventsDialog(selectedItems)
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+
+        override fun onDestroyActionMode(mode: ActionMode) {
+            // When action mode is finished, exit selection mode
+            adapter.exitSelectionMode()
+            actionMode = null
+        }
+    }
+
+    private fun showDeleteMultipleEventsDialog(selectedPositions: List<Int>) {
         if (!isAdded) return
 
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Delete Events")
+        builder.setMessage("Are you sure you want to delete ${selectedPositions.size} selected events?")
 
+        builder.setPositiveButton("Delete") { _, _ ->
+            // Get the event IDs for all selected positions
+            val eventIds = selectedPositions.map { eventsList[it].id }
 
+            // Delete multiple events
+            deleteMultipleEvents(eventIds, selectedPositions)
+        }
 
-        val app = requireActivity().application as EventManagerApplication
-        val url = "https://sysarch.glitch.me/api/event-users"
+        builder.setNegativeButton("Cancel") { _, _ ->
+            // Don't exit selection mode when canceled to allow user to modify selection
+        }
 
-        
+        builder.show()
+    }
+
+    private fun deleteMultipleEvents(eventIds: List<Int>, positions: List<Int>) {
+        // You'll need to implement batch deletion logic
+        // For now, let's delete one by one
+        var successCount = 0
+
+        // Start with the first event
+        if (eventIds.isNotEmpty()) {
+            deleteEventRecursive(eventIds, positions, 0, successCount)
+        }
+    }
+
+    private fun deleteEventRecursive(
+        eventIds: List<Int>,
+        positions: List<Int>,
+        index: Int,
+        successCount: Int
+    ) {
+        if (index >= eventIds.size) {
+            // All deletion attempts complete
+            if (successCount > 0) {
+                Toast.makeText(
+                    requireContext(),
+                    "Successfully deleted $successCount events",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                // Refresh the events list
+                fetchEvents()
+            }
+            // Exit selection mode
+            adapter.exitSelectionMode()
+            return
+        }
+
+        // Delete the current event
+        val eventId = eventIds[index]
+        // Use your existing delete function (you'll need to implement this)
+        deleteEvent(eventId, positions[index]) { success ->
+            val newSuccessCount = if (success) successCount + 1 else successCount
+            // Continue with next event
+            deleteEventRecursive(eventIds, positions, index + 1, newSuccessCount)
+        }
+    }
+
+    private fun deleteEvent(eventId: Int, position: Int, callback: (Boolean) -> Unit = {}) {
+        // Check if fragment is attached
+        if (!isAdded) {
+            callback(false)
+            return
+        }
+
+        val url = "https://sysarch.glitch.me/api/event/$eventId"
+
+        val jsonObjectRequest = JsonObjectRequest(
+            Request.Method.DELETE, url, null,
+            { response ->
+                try {
+                    val message = response.getString("message")
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+
+                    // Update the UI if this is a single delete (not part of batch)
+                    if (adapter.getSelectedItems().isEmpty()) {
+                        eventsList.removeAt(position)
+                        adapter.notifyItemRemoved(position)
+                    }
+
+                    callback(true)
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    callback(false)
+                }
+            },
+            { error ->
+                if (!isAdded) {
+                    callback(false)
+                    return@JsonObjectRequest
+                }
+
+                val errorMessage = when (error.networkResponse?.statusCode) {
+                    404 -> "Event not found"
+                    500 -> "Server error"
+                    else -> "Error deleting event: ${error.message}"
+                }
+                Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+                callback(false)
+            }
+        ).apply {
+            tag = TAG
+        }
+
+        requestQueue.add(jsonObjectRequest)
     }
 
     override fun onDestroy() {

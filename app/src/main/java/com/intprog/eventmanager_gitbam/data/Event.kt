@@ -11,5 +11,7 @@ data class Event(
     val organizer: String = "",
     val ticketPrice: Int = 0,
     val photo: Int = R.drawable.events_default,
-    val category: String = "Uncategorized"
+    val category: String = "Uncategorized",
+    val imageUrl: String = "",        // Add this field for the card image URL
+    val detailImageUrl: String = ""   // Add this field for the detail image URL
 )

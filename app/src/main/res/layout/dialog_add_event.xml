@@ -78,10 +78,13 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Location field hidden initially until picked -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_event_location"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
+            android:visibility="gone"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:boxCornerRadiusTopStart="8dp"
             app:boxCornerRadiusTopEnd="8dp"
@@ -110,10 +113,34 @@
             app:iconGravity="start"
             app:cornerRadius="8dp"/>
 
+        <!-- Category dropdown with exposed dropdown menu -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_event_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            app:boxCornerRadiusTopStart="8dp"
+            app:boxCornerRadiusTopEnd="8dp"
+            app:boxCornerRadiusBottomStart="8dp"
+            app:boxCornerRadiusBottomEnd="8dp">
+
+            <AutoCompleteTextView
+                android:id="@+id/dropdown_event_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Category"
+                android:inputType="none"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Other category field - only visible when "Other" is selected -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_other_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:boxCornerRadiusTopStart="8dp"
             app:boxCornerRadiusTopEnd="8dp"
@@ -121,13 +148,12 @@
             app:boxCornerRadiusBottomEnd="8dp">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edittext_event_category"
+                android:id="@+id/edittext_other_category"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Category"
+                android:hint="Specify Category"
                 android:inputType="text"
-                android:maxLines="1"
-                android:focusable="false"/>
+                android:maxLines="1"/>
 
         </com.google.android.material.textfield.TextInputLayout>
 
