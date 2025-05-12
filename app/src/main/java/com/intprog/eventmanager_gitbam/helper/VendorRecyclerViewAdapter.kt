@@ -3,7 +3,6 @@ package com.intprog.eventmanager_gitbam.helper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.RatingBar
 import android.widget.TextView
@@ -12,34 +11,9 @@ import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.data.Vendor
 
 class VendorRecyclerViewAdapter(
-    private val vendors: List<Vendor>,
-    private val onItemClicked: (Vendor) -> Unit,
-    private val onDeleteClicked: (Int) -> Unit
+    private var vendors: List<Vendor>,
+    private val onItemClicked: (Vendor) -> Unit
 ) : RecyclerView.Adapter<VendorRecyclerViewAdapter.VendorViewHolder>() {
-
-    private var isSelectionMode = false
-    private val selectedItems = mutableSetOf<Int>()
-
-    fun isInSelectionMode(): Boolean = isSelectionMode
-
-    fun enterSelectionMode() {
-        if (!isSelectionMode) {
-            isSelectionMode = true
-            notifyDataSetChanged()
-        }
-    }
-
-    fun exitSelectionMode() {
-        if (isSelectionMode) {
-            isSelectionMode = false
-            selectedItems.clear()
-            notifyDataSetChanged()
-        }
-    }
-    
-    fun getSelectedItems(): List<Int> {
-        return selectedItems.toList()
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VendorViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -58,44 +32,18 @@ class VendorRecyclerViewAdapter(
         holder.vendorRating.rating = vendor.rating
         holder.vendorImage.setImageResource(vendor.photo)
         
-        // Set checkbox visibility based on selection mode
-        holder.selectionCheckBox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
-        holder.selectionCheckBox.isChecked = selectedItems.contains(position)
-        
-        // Set item click listeners
+        // Set item click listener
         holder.itemView.setOnClickListener {
-            if (isSelectionMode) {
-                toggleSelection(position)
-                holder.selectionCheckBox.isChecked = selectedItems.contains(position)
-            } else {
-                onItemClicked(vendor)
-            }
+            onItemClicked(vendor)
         }
-        
-        holder.itemView.setOnLongClickListener {
-            if (!isSelectionMode) {
-                enterSelectionMode()
-                toggleSelection(position)
-                holder.selectionCheckBox.isChecked = true
-            }
-            true
-        }
-        
-        holder.selectionCheckBox.setOnClickListener {
-            toggleSelection(position)
-        }
-    }
-    
-    private fun toggleSelection(position: Int) {
-        if (selectedItems.contains(position)) {
-            selectedItems.remove(position)
-        } else {
-            selectedItems.add(position)
-        }
-        notifyItemChanged(position)
     }
 
     override fun getItemCount(): Int = vendors.size
+
+    fun updateVendors(newVendors: List<Vendor>) {
+        vendors = newVendors
+        notifyDataSetChanged()
+    }
 
     class VendorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val vendorName: TextView = itemView.findViewById(R.id.vendor_name)
@@ -104,6 +52,5 @@ class VendorRecyclerViewAdapter(
         val vendorPrice: TextView = itemView.findViewById(R.id.vendor_price)
         val vendorRating: RatingBar = itemView.findViewById(R.id.vendor_rating)
         val vendorImage: ImageView = itemView.findViewById(R.id.vendor_image)
-        val selectionCheckBox: CheckBox = itemView.findViewById(R.id.checkbox_select_vendor)
     }
 } 

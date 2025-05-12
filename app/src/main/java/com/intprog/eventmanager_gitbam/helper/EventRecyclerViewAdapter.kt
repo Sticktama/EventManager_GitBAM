@@ -1,165 +1,90 @@
 package com.intprog.eventmanager_gitbam.helper
 
+import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.material.chip.Chip
 import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.data.Event
 
 class EventRecyclerViewAdapter(
-    private val listOfEvents: MutableList<Event>,
-    private val onClick: (Event) -> Unit,
-    private val onDeleteClick: (Int) -> Unit
-): RecyclerView.Adapter<EventRecyclerViewAdapter.ItemViewHolder>() {
+    private var events: List<Event>,
+    private val onItemClick: (Event) -> Unit
+) : RecyclerView.Adapter<EventRecyclerViewAdapter.EventViewHolder>() {
 
-    // Track which items are selected
-    private var isSelectionMode = false
-    private val selectedItems = mutableSetOf<Int>()
-    private var selectionModeListener: (() -> Unit)? = null
-    private var clearSelectionModeListener: (() -> Unit)? = null
-
-    class ItemViewHolder(view: View): RecyclerView.ViewHolder(view) {
-        val eventImage: ImageView = view.findViewById(R.id.imageview_event_pic)
-        val eventName: TextView = view.findViewById(R.id.textview_event_name)
-        val eventDate: TextView = view.findViewById(R.id.textview_event_date_badge)
-        val eventLocation: TextView = view.findViewById(R.id.textview_event_location)
-        val eventOrganizer: TextView = view.findViewById(R.id.textview_event_organizer)
-        val eventPrice: TextView = view.findViewById(R.id.textview_event_price)
-        val categoryChip: Chip = view.findViewById(R.id.chip_category)
-        val selectionCheckBox: CheckBox = view.findViewById(R.id.checkbox_select_event)
-    }
-
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): ItemViewHolder {
-        val view: View = LayoutInflater.from(parent.context)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EventViewHolder {
+        val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.event_item_recycler_view, parent, false)
-
-        return ItemViewHolder(view)
+        return EventViewHolder(view)
     }
 
-    override fun onBindViewHolder(
-        holder: ItemViewHolder,
-        position: Int
-    ) {
-        val item: Event = listOfEvents[position]
+    override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
+        val event = events[position]
 
-        holder.eventImage.setImageResource(item.photo)
-        holder.eventName.text = item.eventName
-        holder.eventDate.text = item.eventDate
-        holder.eventLocation.text = item.eventLocation
-        holder.eventOrganizer.text = item.organizer
-        holder.eventPrice.text = if (item.ticketPrice > 0) "₱${item.ticketPrice}" else "Free"
-        holder.categoryChip.text = item.category
-
-        if (item.imageUrl.isNotEmpty()) {
+        // Load event image
+        if (event.imageUrl.isNotEmpty()) {
             Glide.with(holder.itemView.context)
-                .load(item.imageUrl)
+                .load(event.imageUrl)
                 .placeholder(R.drawable.events_default)
                 .error(R.drawable.events_default)
                 .into(holder.eventImage)
         } else {
-            // Fall back to resource image if no URL
-            holder.eventImage.setImageResource(item.photo)
+            holder.eventImage.setImageResource(R.drawable.events_default)
         }
 
-        // Set category chip color based on category
-        val categoryColor = when (item.category.lowercase()) {
-            "conference" -> R.color.blue
-            "workshop" -> R.color.pink
-            "seminar" -> R.color.purple
-            "exhibition" -> R.color.orange
-            "concert" -> R.color.yellow
-            "sports" -> R.color.green
-            "networking" -> R.color.indigo
-            else -> R.color.gray
-        }
-        holder.categoryChip.setChipBackgroundColorResource(categoryColor)
+        holder.eventName.text = event.eventName
+        holder.eventDate.text = event.eventDate
+        holder.eventLocation.text = event.eventLocation
+        holder.eventPrice.text = "₱${event.ticketPrice}"
+        holder.eventCategory.text = event.category
 
-        // Set checkbox visibility and state based on selection mode
-        holder.selectionCheckBox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
-        holder.selectionCheckBox.isChecked = selectedItems.contains(position)
+        // Create a new rounded background with the category color
+        val categoryColor = getCategoryColor(holder.itemView.context, event.category)
+        val shapeDrawable = GradientDrawable()
+        shapeDrawable.shape = GradientDrawable.RECTANGLE
+        shapeDrawable.cornerRadius = 80f
+        shapeDrawable.setColor(categoryColor)
+        holder.eventCategory.background = shapeDrawable
 
-
+        // Set up click listener
         holder.itemView.setOnClickListener {
-            if (isSelectionMode) {
-                toggleSelection(position)
-                holder.selectionCheckBox.isChecked = selectedItems.contains(position)
-            } else {
-                // Perform normal click action
-                onClick(item)
-            }
-        }
-
-        // Set up long click listener to enter selection mode
-        holder.itemView.setOnLongClickListener {
-            if (!isSelectionMode) {
-                enterSelectionMode()
-                toggleSelection(position)
-                holder.selectionCheckBox.isChecked = true
-            }
-            true
-        }
-
-        holder.selectionCheckBox.setOnClickListener {
-            toggleSelection(position)
+            onItemClick(event)
         }
     }
 
-    private fun toggleSelection(position: Int) {
-        if (selectedItems.contains(position)) {
-            selectedItems.remove(position)
-        } else {
-            selectedItems.add(position)
-        }
-        notifyItemChanged(position)
-        
-        // If no items are selected, exit selection mode
-        if (selectedItems.isEmpty()) {
-            exitSelectionMode()
-        }
-    }
-
-    override fun getItemCount(): Int = listOfEvents.size
-
-    // Methods to handle selection mode
-    fun isInSelectionMode(): Boolean {
-        return isSelectionMode
-    }
-
-    fun enterSelectionMode() {
-        if (!isSelectionMode) {
-            isSelectionMode = true
-            notifyDataSetChanged()
-            selectionModeListener?.invoke()
+    private fun getCategoryColor(context: Context, category: String): Int {
+        return when (category.lowercase()) {
+            "conference" -> ContextCompat.getColor(context, R.color.category_conference)
+            "workshop" -> ContextCompat.getColor(context, R.color.category_workshop)
+            "seminar" -> ContextCompat.getColor(context, R.color.category_seminar)
+            "exhibition" -> ContextCompat.getColor(context, R.color.category_exhibition)
+            "concert" -> ContextCompat.getColor(context, R.color.category_concert)
+            "sports" -> ContextCompat.getColor(context, R.color.category_sports)
+            "networking" -> ContextCompat.getColor(context, R.color.category_networking)
+            else -> ContextCompat.getColor(context, R.color.category_default)
         }
     }
 
-    fun exitSelectionMode() {
-        if (isSelectionMode) {
-            isSelectionMode = false
-            selectedItems.clear()
-            notifyDataSetChanged()
-            clearSelectionModeListener?.invoke()
-        }
-    }
-    
-    fun getSelectedItems(): List<Int> {
-        return selectedItems.toList().sortedDescending() // Sort to delete from end to beginning
+    override fun getItemCount() = events.size
+
+    fun updateEvents(newEvents: List<Event>) {
+        events = newEvents
+        notifyDataSetChanged()
     }
 
-    fun setSelectionModeListener(listener: () -> Unit) {
-        selectionModeListener = listener
-    }
-
-    fun setClearSelectionModeListener(listener: () -> Unit) {
-        clearSelectionModeListener = listener
+    class EventViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val eventImage: ImageView = view.findViewById(R.id.event_image)
+        val eventName: TextView = view.findViewById(R.id.event_name)
+        val eventDate: TextView = view.findViewById(R.id.event_date)
+        val eventLocation: TextView = view.findViewById(R.id.event_location)
+        val eventPrice: TextView = view.findViewById(R.id.event_price)
+        val eventCategory: TextView = view.findViewById(R.id.event_category)
     }
 }

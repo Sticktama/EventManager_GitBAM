@@ -46,7 +46,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Event Manager"
+                            android:text="EventHub"
                             android:textSize="24sp"
                             android:textStyle="bold"
                             android:textColor="@color/colorPrimaryDark"
@@ -57,7 +57,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:justificationMode="inter_word"
-                            android:text="Event Manager is a comprehensive platform designed to transform the event planning process. From conceptualization to execution, our platform provides all the tools necessary to create memorable experiences while eliminating the logistical headaches traditionally associated with event planning."
+                            android:text="EventHub is a comprehensive platform designed to transform the event planning process. From conceptualization to execution, our platform provides all the tools necessary to create memorable experiences while eliminating the logistical headaches traditionally associated with event planning."
                             android:textColor="@color/colorSecondaryText"
                             android:textSize="14sp" />
                     </LinearLayout>
@@ -298,7 +298,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Why Choose Event Manager?"
+                            android:text="Why Choose EventHub?"
                             android:textColor="@color/colorPrimaryDark"
                             android:textSize="20sp"
                             android:textStyle="bold" />
@@ -308,7 +308,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
                             android:layout_marginBottom="8dp"
-                            android:text="Event Manager stands out as the premier solution for event organizers of all scales. Whether you're planning a small gathering or a large corporate conference, our platform scales to meet your needs."
+                            android:text="EventHub stands out as the premier solution for event organizers of all scales. Whether you're planning a small gathering or a large corporate conference, our platform scales to meet your needs."
                             android:textColor="@color/colorSecondaryText"
                             android:textSize="14sp" />
 

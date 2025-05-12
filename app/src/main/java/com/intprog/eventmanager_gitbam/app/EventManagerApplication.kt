@@ -6,7 +6,7 @@ import android.util.Log
 class EventManagerApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        Log.e("Event", "Event Manager has awoken!")
+        Log.e("Event", "EventHub has awoken!")
     }
     //user details
     private var _username: String = ""

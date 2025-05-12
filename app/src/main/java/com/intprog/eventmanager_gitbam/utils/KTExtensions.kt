@@ -11,13 +11,18 @@ import android.app.Activity
 import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.fragment.app.Fragment
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.JsonObjectRequest
 import com.intprog.eventmanager_gitbam.LoginActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONException
 
 private val avatarColors = arrayOf(
     "#F44336", "#E91E63", "#9C27B0", "#673AB7",
@@ -70,6 +75,29 @@ fun validateCredentials(value: String, edit: EditText, error: String) {
 
 fun String.capitalizeInit(): String {
     return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+}
+
+fun fetchServerTime(activity: Activity, TAG: String, requestQueue: RequestQueue,
+                    onResult: (String?) -> Unit) {
+    val url = "https://sysarch.glitch.me/api/server-time"
+    val timeRequest = JsonObjectRequest(
+        Request.Method.GET, url, null,
+        { response ->
+            try {
+                val serverTime = response.getString("serverTime")
+                onResult(serverTime)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+                Toast.makeText(activity, "Error parsing server time", Toast.LENGTH_SHORT).show()
+                onResult(null)
+            }
+        },
+        { _ ->
+            Toast.makeText(activity, "Failed to fetch server time.", Toast.LENGTH_LONG).show()
+            onResult(null)
+        }
+    )
+    requestQueue.add(timeRequest)
 }
 
 fun Context.signOut(showProgressDialog: Boolean = true) {

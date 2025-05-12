@@ -7,9 +7,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.cardview.widget.CardView
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -20,6 +25,8 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.intprog.eventmanager_gitbam.R
@@ -30,7 +37,6 @@ import com.intprog.eventmanager_gitbam.helper.VendorRecyclerViewAdapter
 import com.intprog.eventmanager_gitbam.LocationPickerActivity
 import org.json.JSONException
 import org.json.JSONObject
-import java.util.*
 
 class VendorListingFragment : Fragment() {
 
@@ -39,6 +45,19 @@ class VendorListingFragment : Fragment() {
     private lateinit var requestQueue: RequestQueue
     private val TAG = "VendorListingFragment"
     private var addVendorDialog: AlertDialog? = null
+    private lateinit var searchEditText: EditText
+    private lateinit var filterButton: MaterialButton
+    private lateinit var filterOverlay: View
+    private lateinit var filterModal: CardView
+    private lateinit var closeFilterButton: ImageButton
+    private lateinit var categoryChipGroup: ChipGroup
+    private lateinit var minPriceInput: TextInputEditText
+    private lateinit var maxPriceInput: TextInputEditText
+    private lateinit var ratingDropdown: AutoCompleteTextView
+    private lateinit var resetFiltersButton: MaterialButton
+    private lateinit var applyFiltersButton: MaterialButton
+    
+    private val filterOptions = FilterOptions()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,38 +74,92 @@ class VendorListingFragment : Fragment() {
         requestQueue = Volley.newRequestQueue(requireContext())
 
         // Set up RecyclerView with GridLayoutManager
-        val recyclerView: RecyclerView = view.findViewById(R.id.vendor_recyclerview)
+        val recyclerView: RecyclerView = view.findViewById(R.id.recyclerview)
         val gridLayoutManager = GridLayoutManager(requireContext(), 2)
         recyclerView.layoutManager = gridLayoutManager
 
-        // Add button for adding new vendors
-        view.findViewById<FloatingActionButton>(R.id.fab_add_vendor).setOnClickListener {
-            showAddVendorDialog()
+        // Initialize search and basic filter
+        searchEditText = view.findViewById(R.id.search_edittext)
+        filterButton = view.findViewById(R.id.filter_button)
+
+        // Initialize filter modal views
+        filterOverlay = view.findViewById(R.id.filter_overlay)
+        filterModal = view.findViewById(R.id.filter_modal)
+        closeFilterButton = view.findViewById(R.id.close_filter_button)
+        categoryChipGroup = view.findViewById(R.id.category_chip_group)
+        minPriceInput = view.findViewById(R.id.min_price_input)
+        maxPriceInput = view.findViewById(R.id.max_price_input)
+        ratingDropdown = view.findViewById(R.id.rating_dropdown)
+        resetFiltersButton = view.findViewById(R.id.reset_filters_button)
+        applyFiltersButton = view.findViewById(R.id.apply_filters_button)
+
+        // Set up search functionality
+        searchEditText.doOnTextChanged { text, _, _, _ ->
+            filterOptions.searchQuery = text.toString()
+            applyFilters()
+        }
+
+        // Set up filter button to show modal
+        filterButton.setOnClickListener {
+            showFilterModal()
+        }
+        
+        // Set up filter modal close button
+        closeFilterButton.setOnClickListener {
+            hideFilterModal()
+        }
+        
+        // Set up filter overlay click to dismiss
+        filterOverlay.setOnClickListener {
+            hideFilterModal()
+        }
+        
+        // Set up category chips
+        categoryChipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (checkedIds.isNotEmpty()) {
+                val chipId = checkedIds[0]
+                val chip = view.findViewById<Chip>(chipId)
+                filterOptions.category = if (chip.text.toString() == "All") "All" else chip.text.toString()
+            } else {
+                filterOptions.category = "All"
+            }
+        }
+        
+        // Set up price range inputs
+        setupPriceInputs()
+        
+        // Set up rating dropdown
+        setupRatingDropdown()
+        
+        // Set up reset filters button
+        resetFiltersButton.setOnClickListener {
+            resetFilters()
+        }
+        
+        // Set up apply filters button
+        applyFiltersButton.setOnClickListener {
+            applyFilters()
+            hideFilterModal()
         }
 
         // Set up adapter
         val app = requireActivity().application as EventManagerApplication
         adapter = VendorRecyclerViewAdapter(
-            vendorsList,
-            { vendor ->
-                // Handle click event
-                val intent = Intent(requireContext(), VendorDetailsActivity::class.java)
-                app.vendorID = vendor.id
-                app.vendorName = vendor.name
-                app.vendorCategory = vendor.category
-                app.vendorLocation = vendor.location
-                app.vendorDescription = vendor.description
-                app.vendorRating = vendor.rating
-                app.vendorPrice = vendor.price
-                app.vendorContact = vendor.contactInfo
-                app.vendorPhoto = vendor.photo
-                startActivity(intent)
-            },
-            { position ->
-                // Handle delete click
-                showDeleteVendorDialog(position)
-            }
-        )
+            vendorsList
+        ) { vendor ->
+            // Handle click event
+            val intent = Intent(requireContext(), VendorDetailsActivity::class.java)
+            app.vendorID = vendor.id
+            app.vendorName = vendor.name
+            app.vendorCategory = vendor.category
+            app.vendorLocation = vendor.location
+            app.vendorDescription = vendor.description
+            app.vendorRating = vendor.rating
+            app.vendorPrice = vendor.price
+            app.vendorContact = vendor.contactInfo
+            app.vendorPhoto = vendor.photo
+            startActivity(intent)
+        }
 
         recyclerView.adapter = adapter
 
@@ -97,6 +170,59 @@ class VendorListingFragment : Fragment() {
         if (vendorsList.isEmpty()) {
             addSampleVendors()
         }
+    }
+    
+    private fun setupPriceInputs() {
+        minPriceInput.doOnTextChanged { text, _, _, _ ->
+            filterOptions.minPrice = if (text.isNullOrEmpty()) -1 else text.toString().toIntOrNull() ?: -1
+        }
+        
+        maxPriceInput.doOnTextChanged { text, _, _, _ ->
+            filterOptions.maxPrice = if (text.isNullOrEmpty()) -1 else text.toString().toIntOrNull() ?: -1
+        }
+    }
+    
+    private fun setupRatingDropdown() {
+        val ratingOptions = arrayOf("Any", "3.0+", "3.5+", "4.0+", "4.5+", "5.0")
+        val ratingAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, ratingOptions)
+        
+        ratingDropdown.setAdapter(ratingAdapter)
+        
+        ratingDropdown.setOnItemClickListener { _, _, position, _ ->
+            filterOptions.minRating = when (position) {
+                0 -> 0f
+                1 -> 3.0f
+                2 -> 3.5f
+                3 -> 4.0f
+                4 -> 4.5f
+                5 -> 5.0f
+                else -> 0f
+            }
+        }
+    }
+
+    private fun showFilterModal() {
+        filterOverlay.visibility = View.VISIBLE
+        filterModal.visibility = View.VISIBLE
+    }
+    
+    private fun hideFilterModal() {
+        filterOverlay.visibility = View.GONE
+        filterModal.visibility = View.GONE
+    }
+    
+    private fun resetFilters() {
+        // Reset all filter options
+        filterOptions.reset()
+        
+        // Reset UI elements
+        categoryChipGroup.check(R.id.chip_all)
+        minPriceInput.setText("")
+        maxPriceInput.setText("")
+        ratingDropdown.setText("Any", false)
+        
+        // Apply the reset filters
+        applyFilters()
     }
 
     private fun fetchVendors() {
@@ -114,6 +240,9 @@ class VendorListingFragment : Fragment() {
 
                     for (i in 0 until vendorsArray.length()) {
                         val vendorObject = vendorsArray.getJSONObject(i)
+                        
+                        // Get location for filter
+                        val location = vendorObject.optString("location", "")
 
                         // Create Vendor object from JSON
                         val vendor = Vendor(
@@ -121,7 +250,7 @@ class VendorListingFragment : Fragment() {
                             name = vendorObject.getString("name"),
                             category = vendorObject.optString("category", "Uncategorized"),
                             description = vendorObject.optString("description", ""),
-                            location = vendorObject.optString("location", ""),
+                            location = location,
                             rating = vendorObject.optDouble("rating", 0.0).toFloat(),
                             price = vendorObject.optInt("price", 0),
                             contactInfo = vendorObject.optString("contact_info", ""),
@@ -130,8 +259,9 @@ class VendorListingFragment : Fragment() {
 
                         vendorsList.add(vendor)
                     }
-
-                    adapter.notifyDataSetChanged()
+                    
+                    // Apply any existing filters
+                    applyFilters()
 
                 } catch (e: JSONException) {
                     e.printStackTrace()
@@ -164,7 +294,7 @@ class VendorListingFragment : Fragment() {
         vendorsList.clear()
         
         // Add sample vendors for demo purposes
-        vendorsList.add(
+        val sampleVendors = listOf(
             Vendor(
                 id = 1,
                 name = "Delightful Catering",
@@ -175,10 +305,7 @@ class VendorListingFragment : Fragment() {
                 price = 15000,
                 contactInfo = "delightful@catering.com",
                 photo = R.drawable.events_default
-            )
-        )
-        
-        vendorsList.add(
+            ),
             Vendor(
                 id = 2,
                 name = "Sound System Rentals",
@@ -189,10 +316,7 @@ class VendorListingFragment : Fragment() {
                 price = 8000,
                 contactInfo = "info@soundsystem.com",
                 photo = R.drawable.events_default
-            )
-        )
-        
-        vendorsList.add(
+            ),
             Vendor(
                 id = 3,
                 name = "Party Decorations Co.",
@@ -203,10 +327,7 @@ class VendorListingFragment : Fragment() {
                 price = 10000,
                 contactInfo = "hello@partydeco.com",
                 photo = R.drawable.events_default
-            )
-        )
-        
-        vendorsList.add(
+            ),
             Vendor(
                 id = 4,
                 name = "Happy Clown Entertainment",
@@ -217,10 +338,7 @@ class VendorListingFragment : Fragment() {
                 price = 3000,
                 contactInfo = "bookings@happyclown.com",
                 photo = R.drawable.events_default
-            )
-        )
-        
-        vendorsList.add(
+            ),
             Vendor(
                 id = 5,
                 name = "Event Photography Pro",
@@ -231,10 +349,7 @@ class VendorListingFragment : Fragment() {
                 price = 7000,
                 contactInfo = "shoot@eventphoto.com",
                 photo = R.drawable.events_default
-            )
-        )
-        
-        vendorsList.add(
+            ),
             Vendor(
                 id = 6,
                 name = "Premium Chair Rentals",
@@ -248,7 +363,49 @@ class VendorListingFragment : Fragment() {
             )
         )
         
-        adapter.notifyDataSetChanged()
+        // Add sample vendors to list
+        vendorsList.addAll(sampleVendors)
+        
+        // Apply any existing filters
+        applyFilters()
+    }
+
+    private fun applyFilters() {
+        val filteredList = vendorsList.filter { vendor ->
+            // Search filter
+            val matchesSearch = if (filterOptions.searchQuery.isNotEmpty()) {
+                vendor.name.contains(filterOptions.searchQuery, ignoreCase = true) ||
+                vendor.location.contains(filterOptions.searchQuery, ignoreCase = true) ||
+                vendor.description.contains(filterOptions.searchQuery, ignoreCase = true)
+            } else {
+                true
+            }
+            
+            // Category filter
+            val matchesCategory = if (filterOptions.category != "All") {
+                vendor.category == filterOptions.category
+            } else {
+                true
+            }
+            
+            // Price filter
+            val matchesPrice = when {
+                filterOptions.minPrice > 0 && filterOptions.maxPrice > 0 -> 
+                    vendor.price >= filterOptions.minPrice && vendor.price <= filterOptions.maxPrice
+                filterOptions.minPrice > 0 -> 
+                    vendor.price >= filterOptions.minPrice
+                filterOptions.maxPrice > 0 -> 
+                    vendor.price <= filterOptions.maxPrice
+                else -> true
+            }
+            
+            // Rating filter
+            val matchesRating = vendor.rating >= filterOptions.minRating
+            
+            matchesSearch && matchesCategory && matchesPrice && matchesRating
+        }
+
+        adapter.updateVendors(filteredList)
     }
 
     private fun showAddVendorDialog() {
@@ -332,36 +489,6 @@ class VendorListingFragment : Fragment() {
                     locationEditText?.setText(placeName)
                 }
             }
-        }
-    }
-
-    private fun showDeleteVendorDialog(position: Int) {
-        // Check if fragment is attached
-        if (!isAdded) return
-
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Delete Vendor")
-        builder.setMessage("Are you sure you want to remove vendor ${vendorsList[position].name}?")
-
-        builder.setPositiveButton("Remove") { _, _ ->
-            deleteVendor(vendorsList[position].id, position)
-        }
-
-        builder.setNegativeButton("Cancel") { _, _ ->
-            // Exit delete mode when canceled
-            adapter.exitSelectionMode()
-        }
-
-        builder.show()
-    }
-
-    // Handle back button press in the fragment (to be called from containing activity)
-    fun handleBackPress(): Boolean {
-        return if (::adapter.isInitialized && adapter.isInSelectionMode()) {
-            adapter.exitSelectionMode()
-            true // We handled the back press
-        } else {
-            false // Let the activity handle the back press
         }
     }
 
@@ -454,23 +581,50 @@ class VendorListingFragment : Fragment() {
         requestQueue.add(jsonObjectRequest)
     }
 
-    private fun deleteVendor(vendorId: Int, position: Int) {
-        // Check if fragment is attached
-        if (!isAdded) return
+    // Handle back button press in the fragment (to be called from containing activity)
+    fun handleBackPress(): Boolean {
+        // If filter modal is showing, close it first
+        if (filterModal.visibility == View.VISIBLE) {
+            hideFilterModal()
+            return true
+        }
         
-        // Remove vendor locally for demo purposes
-        vendorsList.removeAt(position)
-        adapter.notifyItemRemoved(position)
-        adapter.exitSelectionMode()
-        
-        // In a real implementation, this would call the API to delete the vendor
-        // For now, we just show a toast
-        Toast.makeText(requireContext(), "Vendor removed", Toast.LENGTH_SHORT).show()
+        // If search or filter is active, clear them first
+        if (filterOptions.isActive()) {
+            resetFilters()
+            searchEditText.setText("")
+            return true
+        }
+        return false
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Cancel any pending requests when the fragment is destroyed
         requestQueue.cancelAll(TAG)
+    }
+    
+    // Helper class to store filter options
+    private inner class FilterOptions {
+        var searchQuery: String = ""
+        var category: String = "All"
+        var minPrice: Int = -1
+        var maxPrice: Int = -1
+        var minRating: Float = 0f
+        
+        fun reset() {
+            searchQuery = ""
+            category = "All"
+            minPrice = -1
+            maxPrice = -1
+            minRating = 0f
+        }
+        
+        fun isActive(): Boolean {
+            return searchQuery.isNotEmpty() || 
+                   category != "All" || 
+                   minPrice > 0 || 
+                   maxPrice > 0 || 
+                   minRating > 0f
+        }
     }
 } 

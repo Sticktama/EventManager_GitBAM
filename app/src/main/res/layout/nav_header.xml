@@ -35,7 +35,7 @@
         android:id="@+id/tv_nav_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Event Manager"
+        android:text="EventHub"
         android:textColor="@color/white"
         android:textStyle="bold"
         android:layout_marginBottom="16dp"/>

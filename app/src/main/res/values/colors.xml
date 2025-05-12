@@ -34,4 +34,14 @@
     <color name="colorSuccessDark">#008000</color>
     <color name="colorSecondaryText">#757575</color>
     <color name="colorDivider">#BDBDBD</color>
+
+    <!-- Category Colors -->
+    <color name="category_conference">#2196F3</color>
+    <color name="category_workshop">#4CAF50</color>
+    <color name="category_seminar">#9C27B0</color>
+    <color name="category_exhibition">#FF9800</color>
+    <color name="category_concert">#E91E63</color>
+    <color name="category_sports">#F44336</color>
+    <color name="category_networking">#00BCD4</color>
+    <color name="category_default">#757575</color>
 </resources>

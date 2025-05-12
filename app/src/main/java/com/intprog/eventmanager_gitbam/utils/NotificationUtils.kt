@@ -16,7 +16,7 @@ import com.intprog.eventmanager_gitbam.app.EventManagerApplication
 object NotificationUtils {
     
     private const val CHANNEL_ID = "event_manager_channel"
-    private const val CHANNEL_NAME = "Event Manager Notifications"
+    private const val CHANNEL_NAME = "EventHub Notifications"
     private const val CHANNEL_DESCRIPTION = "Notifications for events, reminders, and vendor updates"
     
     /**
