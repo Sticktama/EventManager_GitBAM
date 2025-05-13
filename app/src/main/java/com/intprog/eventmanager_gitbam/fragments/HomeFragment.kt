@@ -41,6 +41,12 @@ class HomeFragment : Fragment() {
     // Add these variables to reference the TextViews
     private lateinit var tvTotalEvents: TextView
     private lateinit var tvMonthlyEvents: TextView
+    private lateinit var tvNextEventName: TextView
+    private lateinit var tvNextEventDay: TextView
+    private lateinit var tvNextEventMonth: TextView
+    private lateinit var tvNextEventTime: TextView
+    private lateinit var tvNextEventLocation: TextView
+    private lateinit var tvNextEventId: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,6 +64,12 @@ class HomeFragment : Fragment() {
         // Initialize the TextViews
         tvTotalEvents = view.findViewById(R.id.tv_total_events)
         tvMonthlyEvents = view.findViewById(R.id.tv_monthly_events)
+        tvNextEventName = view.findViewById(R.id.next_event_name)
+        tvNextEventDay = view.findViewById(R.id.next_event_day)
+        tvNextEventMonth = view.findViewById(R.id.next_event_month)
+        tvNextEventTime = view.findViewById(R.id.next_event_time)
+        tvNextEventLocation = view.findViewById(R.id.next_event_location)
+        tvNextEventId = view.findViewById(R.id.next_event_id)
 
         // Get reference to the NavigationView
         val navigationView = requireActivity().findViewById<NavigationView>(R.id.nav_view)
@@ -81,15 +93,15 @@ class HomeFragment : Fragment() {
             val intent = Intent(requireContext(), EventDetailsActivity::class.java)
 
             // Pass event details from the "Next Event" card
-            app.eventID = view.findViewById<TextView>(R.id.next_event_id).text.toString().toInt()
-            app.eventName = view.findViewById<TextView>(R.id.next_event_name).text.toString()
+            app.eventID = tvNextEventId.text.toString().toInt()
+            app.eventName = tvNextEventName.text.toString()
 
             // Construct date from the day and month shown on card
-            val day = view.findViewById<TextView>(R.id.next_event_day).text.toString()
-            val month = view.findViewById<TextView>(R.id.next_event_month).text.toString()
+            val day = tvNextEventDay.text.toString()
+            val month = tvNextEventMonth.text.toString()
             app.eventDate = "2023-${getMonthNumber(month)}-$day"
 
-            app.eventLocation = view.findViewById<TextView>(R.id.next_event_location).text.toString()
+            app.eventLocation = tvNextEventLocation.text.toString()
 
             // Default values for fields not shown on the next event card
             app.eventDescription = "Annual music festival featuring local bands and artists"
@@ -98,6 +110,19 @@ class HomeFragment : Fragment() {
             app.eventPhoto = R.drawable.events_default
 
             startActivity(intent)
+        }
+
+        // Set up Quick Actions
+        view.findViewById<CardView>(R.id.quick_action_create_event).setOnClickListener {
+            // Navigate to create event screen
+            val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            bottomNav.selectedItemId = R.id.navigation_events
+        }
+
+        view.findViewById<CardView>(R.id.quick_action_find_vendors).setOnClickListener {
+            // Navigate to vendors screen
+            val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            bottomNav.selectedItemId = R.id.navigation_vendors
         }
 
         // Fetch event count for the current user
@@ -178,7 +203,7 @@ class HomeFragment : Fragment() {
                     // Immediately update total events count
                     tvTotalEvents.text = response.length().toString()
 
-                    // Now fetch server time to calculate monthly events
+                    // Get current time to calculate monthly events
                     fetchServerTime(requireActivity(), TAG, requestQueue) { serverTime ->
                         if (!isAdded) {
                             Log.e(TAG, "Fragment not attached during server time callback")
@@ -187,7 +212,7 @@ class HomeFragment : Fragment() {
 
                         if (serverTime != null) {
                             try {
-                                Log.d(TAG, "Server time: $serverTime")
+                                Log.d(TAG, "Current time: $serverTime")
 
                                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
                                 val currentDate = LocalDate.parse(serverTime.substring(0, 10))
@@ -196,8 +221,10 @@ class HomeFragment : Fragment() {
                                 Log.d(TAG, "Current month: $currentMonth")
 
                                 var monthlyEventCount = 0
+                                var nextEvent: org.json.JSONObject? = null
+                                var nextEventDate: LocalDate? = null
 
-                                // Count events in current month
+                                // Count events in current month and find next event
                                 for (i in 0 until response.length()) {
                                     try {
                                         val event = response.getJSONObject(i)
@@ -209,6 +236,12 @@ class HomeFragment : Fragment() {
                                             monthlyEventCount++
                                             Log.d(TAG, "Event in current month: ${event.getString("name")}")
                                         }
+
+                                        // Check if this is the next upcoming event
+                                        if (eventDate.isAfter(currentDate) && (nextEventDate == null || eventDate.isBefore(nextEventDate))) {
+                                            nextEvent = event
+                                            nextEventDate = eventDate
+                                        }
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Error parsing event: ${e.message}")
                                     }
@@ -219,12 +252,27 @@ class HomeFragment : Fragment() {
                                 // Update UI with monthly count
                                 tvMonthlyEvents.text = monthlyEventCount.toString()
 
+                                // Update next event card if we found one
+                                nextEvent?.let { event ->
+                                    try {
+                                        val eventDate = LocalDate.parse(event.getString("date"), formatter)
+                                        tvNextEventDay.text = eventDate.dayOfMonth.toString()
+                                        tvNextEventMonth.text = eventDate.month.toString().substring(0, 3).uppercase()
+                                        tvNextEventName.text = event.getString("name")
+                                        tvNextEventTime.text = event.optString("time", "10:00 AM - 8:00 PM")
+                                        tvNextEventLocation.text = event.optString("location", "Central Park")
+                                        tvNextEventId.text = event.optString("id", "E001")
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Error updating next event card: ${e.message}")
+                                    }
+                                }
+
                             } catch (e: Exception) {
-                                Log.e(TAG, "Error processing server time: ${e.message}", e)
+                                Log.e(TAG, "Error processing current time: ${e.message}", e)
                                 tvMonthlyEvents.text = "0" // Fallback value
                             }
                         } else {
-                            Log.e(TAG, "Server time was null")
+                            Log.e(TAG, "Current time was null")
                             tvMonthlyEvents.text = "0" // Fallback value
                         }
                     }

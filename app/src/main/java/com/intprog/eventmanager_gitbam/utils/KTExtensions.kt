@@ -79,25 +79,9 @@ fun String.capitalizeInit(): String {
 
 fun fetchServerTime(activity: Activity, TAG: String, requestQueue: RequestQueue,
                     onResult: (String?) -> Unit) {
-    val url = "https://sysarch.glitch.me/api/server-time"
-    val timeRequest = JsonObjectRequest(
-        Request.Method.GET, url, null,
-        { response ->
-            try {
-                val serverTime = response.getString("serverTime")
-                onResult(serverTime)
-            } catch (e: JSONException) {
-                e.printStackTrace()
-                Toast.makeText(activity, "Error parsing server time", Toast.LENGTH_SHORT).show()
-                onResult(null)
-            }
-        },
-        { _ ->
-            Toast.makeText(activity, "Failed to fetch server time.", Toast.LENGTH_LONG).show()
-            onResult(null)
-        }
-    )
-    requestQueue.add(timeRequest)
+    // Get current time in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss.SSS'Z')
+    val currentTime = java.time.LocalDateTime.now().toString()
+    onResult(currentTime)
 }
 
 fun Context.signOut(showProgressDialog: Boolean = true) {

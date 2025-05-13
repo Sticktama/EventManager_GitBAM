@@ -20,161 +20,270 @@
             android:layout_marginTop="20dp"
             android:contentDescription="App Logo"/>
 
-        <EditText
-            android:id="@+id/et_username"
+        <!-- Email View -->
+        <LinearLayout
+            android:id="@+id/email_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:minLines="1"
-            android:singleLine="true"
-            android:hint="Username"
-            android:textColorHint="@color/light_gray"
-            android:padding="12dp"
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:drawableStart="@drawable/ic_person"
-            android:drawablePadding="12dp"
-            android:background="@drawable/input_background"
-            android:layout_marginBottom="12dp"/>
+            android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/et_password"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:minLines="1"
-            android:singleLine="true"
-            android:hint="Password"
-            android:textColorHint="@color/light_gray"
-            android:padding="12dp"
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:inputType="textPassword"
-            android:drawableStart="@drawable/ic_password"
-            android:drawablePadding="12dp"
-            android:background="@drawable/input_background"
-            android:layout_marginBottom="12dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome to EventHub"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="8dp"/>
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enter your email to get started"
+                android:textSize="16sp"
+                android:textColor="@color/light_gray"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="24dp"/>
 
-            <Button
-                android:id="@+id/button_login"
+            <EditText
+                android:id="@+id/et_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Login"
-                android:textSize="20sp"
+                android:maxLines="1"
+                android:minLines="1"
+                android:singleLine="true"
+                android:hint="Email Address"
+                android:textColorHint="@color/light_gray"
+                android:padding="12dp"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:inputType="textEmailAddress"
+                android:drawableStart="@drawable/ic_email"
+                android:drawablePadding="12dp"
+                android:background="@drawable/input_background"
+                android:layout_marginBottom="16dp"/>
+
+            <Button
+                android:id="@+id/button_continue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Continue"
+                android:textSize="18sp"
                 android:background="@drawable/rounded_corner"
                 android:textColor="@color/white"
                 android:paddingTop="12dp"
                 android:paddingBottom="12dp"/>
 
-            <ProgressBar
-                android:id="@+id/login_progress"
-                style="?android:attr/progressBarStyleSmall"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_gravity="center"
-                android:visibility="gone"
-                android:indeterminateTint="@color/white"/>
-        </FrameLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Or continue with"
+                android:textSize="14sp"
+                android:textColor="@color/light_gray"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp"/>
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/button_google_signin"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp"
-                android:foreground="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+                android:layout_height="wrap_content">
 
-                <RelativeLayout
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/button_google_signin"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@android:color/white">
+                    android:layout_height="50dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="2dp"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_centerInParent="true">
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/white">
 
-                        <ImageView
-                            android:id="@+id/google_icon"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_google_logo" />
-
-                        <TextView
-                            android:id="@+id/google_text"
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Sign in with Google"
-                            android:textSize="16sp"
-                            android:textColor="#5F6368"
-                            android:paddingStart="16dp"
-                            android:fontFamily="sans-serif-medium" />
-                    </LinearLayout>
+                            android:orientation="horizontal"
+                            android:layout_centerInParent="true">
 
-                    <ProgressBar
-                        android:id="@+id/google_signin_progress"
-                        style="?android:attr/progressBarStyle"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:layout_centerInParent="true"
-                        android:visibility="gone" />
-                </RelativeLayout>
-            </androidx.cardview.widget.CardView>
-        </FrameLayout>
+                            <ImageView
+                                android:id="@+id/google_icon"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_google_logo" />
 
+                            <TextView
+                                android:id="@+id/google_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Sign in with Google"
+                                android:textSize="16sp"
+                                android:textColor="#5F6368"
+                                android:paddingStart="16dp"
+                                android:fontFamily="sans-serif-medium" />
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/google_signin_progress"
+                            style="?android:attr/progressBarStyle"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_centerInParent="true"
+                            android:visibility="gone" />
+                    </RelativeLayout>
+                </androidx.cardview.widget.CardView>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Login View -->
         <LinearLayout
+            android:id="@+id/login_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginTop="16dp">
+            android:visibility="gone">
 
             <TextView
-                android:id="@+id/link_forgot_password"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:linksClickable="true"
-                android:textColorLink="@color/white"
-                android:textSize="16sp"
-                android:text="Forgot Password?"
+                android:text="Welcome Back"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="24dp" />
+                android:textColor="@color/black"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="8dp"/>
 
-            <LinearLayout
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:text="Sign in to continue to your account"
+                android:textSize="16sp"
+                android:textColor="@color/light_gray"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="24dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:textColor="@color/white"
-                    android:text="Don't have an account? " />
+            <TextView
+                android:id="@+id/tv_email_display"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/light_gray"
+                android:layout_marginBottom="8dp"/>
 
-                <TextView
-                    android:id="@+id/link_register"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:linksClickable="true"
-                    android:textColorLink="@color/white"
-                    android:textSize="16sp"
-                    android:text="Register"
-                    android:textStyle="bold" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/tv_change_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Change email"
+                android:textColor="@color/lavender"
+                android:textSize="14sp"
+                android:layout_marginBottom="16dp"/>
+
+            <EditText
+                android:id="@+id/et_username"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:minLines="1"
+                android:singleLine="true"
+                android:hint="Username"
+                android:textColorHint="@color/light_gray"
+                android:padding="12dp"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:drawableStart="@drawable/ic_person"
+                android:drawablePadding="12dp"
+                android:background="@drawable/input_background"
+                android:layout_marginBottom="12dp"/>
+
+            <EditText
+                android:id="@+id/et_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:minLines="1"
+                android:singleLine="true"
+                android:hint="Password"
+                android:textColorHint="@color/light_gray"
+                android:padding="12dp"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:inputType="textPassword"
+                android:drawableStart="@drawable/ic_password"
+                android:drawablePadding="12dp"
+                android:background="@drawable/input_background"
+                android:layout_marginBottom="16dp"/>
+
+            <Button
+                android:id="@+id/button_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sign In"
+                android:textSize="18sp"
+                android:background="@drawable/rounded_corner"
+                android:textColor="@color/white"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"/>
         </LinearLayout>
+
+        <!-- Register View -->
+        <LinearLayout
+            android:id="@+id/register_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create Account"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sign up to start creating events"
+                android:textSize="16sp"
+                android:textColor="@color/light_gray"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="24dp"/>
+
+            <TextView
+                android:id="@+id/tv_register_email_display"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/light_gray"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tv_register_change_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Change email"
+                android:textColor="@color/lavender"
+                android:textSize="14sp"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Register form fields will be added here -->
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"/>
     </LinearLayout>
 </ScrollView>

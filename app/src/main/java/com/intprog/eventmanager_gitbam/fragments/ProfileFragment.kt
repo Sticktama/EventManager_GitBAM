@@ -218,7 +218,7 @@ class ProfileFragment : Fragment() {
                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->
@@ -280,7 +280,7 @@ class ProfileFragment : Fragment() {
                     }
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->

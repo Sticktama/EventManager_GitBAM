@@ -161,7 +161,8 @@ class SettingsFragment : Fragment() {
                     }
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    //TODO ERROR PARSING SERVER RESPONSE
+//Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
                     setDefaultSettings()
                 }
             },
@@ -223,7 +224,7 @@ class SettingsFragment : Fragment() {
                     Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT).show()
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->

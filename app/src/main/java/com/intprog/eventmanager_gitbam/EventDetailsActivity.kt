@@ -3,30 +3,39 @@ package com.intprog.eventmanager_gitbam
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.view.View
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.android.volley.Request
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
+import androidx.cardview.widget.CardView
+import com.android.volley.*
+import com.android.volley.toolbox.*
 import com.bumptech.glide.Glide
+import com.google.android.material.button.MaterialButton
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
 import org.json.JSONException
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
 class EventDetailsActivity : AppCompatActivity() {
+    companion object {
+        private const val TAG = "EventDetailsActivity"
+        private const val API_BASE_URL = "https://sysarch.glitch.me/api"
+    }
 
     private lateinit var requestQueue: RequestQueue
-    private val TAG = "EventDetailsActivity"
     private lateinit var qrCodeImageView: ImageView
+    private lateinit var registerButton: MaterialButton
+    private lateinit var unregisterButton: MaterialButton
+    private lateinit var deleteButton: MaterialButton
+    private lateinit var progressBar: ProgressBar
+    private var isRegistered = false
+    private var registeredUsers = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,23 +45,49 @@ class EventDetailsActivity : AppCompatActivity() {
         // Initialize Volley request queue
         requestQueue = Volley.newRequestQueue(this)
 
+        // Initialize views
+        initializeViews()
+
         // Get event ID from intent
         val eventId = app.eventID
 
-        // Initialize QR code image view
-        qrCodeImageView = findViewById(R.id.qr_code_image)
-
         // Fetch event details and generate QR code
         fetchEventDetails(eventId)
+        fetchRegisteredUsers(eventId)
+    }
 
-        // Add back button to return to event listing
-        findViewById<Button>(R.id.button_back).setOnClickListener {
+    private fun initializeViews() {
+        // Initialize views
+        qrCodeImageView = findViewById(R.id.qr_code_image)
+        registerButton = findViewById(R.id.button_register)
+        unregisterButton = findViewById(R.id.button_unregister)
+        deleteButton = findViewById(R.id.button_delete)
+        progressBar = findViewById(R.id.progress_bar)
+
+        // Setup back button
+        findViewById<ImageButton>(R.id.button_back).setOnClickListener {
             finish()
+        }
+
+        // Setup register button
+        registerButton.setOnClickListener {
+            handleRegister()
+        }
+
+        // Setup unregister button
+        unregisterButton.setOnClickListener {
+            handleUnregister()
+        }
+
+        // Setup delete button
+        deleteButton.setOnClickListener {
+            showDeleteDialog()
         }
     }
 
     private fun fetchEventDetails(eventId: Int) {
-        val url = "https://sysarch.glitch.me/api/event/$eventId"
+        showLoading(true)
+        val url = "$API_BASE_URL/events/$eventId"
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, url, null,
@@ -83,24 +118,6 @@ class EventDetailsActivity : AppCompatActivity() {
                     app.eventPrice = eventObject.optInt("price", 0)
                     app.eventCategory = eventObject.optString("category", "Uncategorized")
 
-                    // Get the ImageView
-                    val detailEventImage = findViewById<ImageView>(R.id.detail_event_image)
-
-                    // Choose which image URL to use (detail image preferred)
-                    val imageToLoad = if (detailImageUrl.isNotEmpty()) detailImageUrl else imageUrl
-
-                    // Load image with Glide if URL is available
-                    if (imageToLoad.isNotEmpty()) {
-                        Glide.with(this)
-                            .load(imageToLoad)
-                            .placeholder(R.drawable.events_default)
-                            .error(R.drawable.events_default)
-                            .into(detailEventImage)
-                    } else {
-                        // Fall back to resource image
-                        detailEventImage.setImageResource(R.drawable.events_default)
-                    }
-
                     // Display all event details
                     displayEventDetails()
 
@@ -108,16 +125,17 @@ class EventDetailsActivity : AppCompatActivity() {
                     generateQRCode(eventId)
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    Toast.makeText(this, "Error parsing event data", Toast.LENGTH_SHORT).show()
-                    // Fallback to displaying from stored app data
+                    showError("Error parsing event data")
                     displayEventDetails()
+                } finally {
+                    showLoading(false)
                 }
             },
             { error ->
                 Log.e(TAG, "Error fetching event details: ${error.message}")
-                Toast.makeText(this, "Failed to load event details. Please try again.", Toast.LENGTH_LONG).show()
-                // Fallback to displaying from stored app data
+                showError("Failed to load event details")
                 displayEventDetails()
+                showLoading(false)
             }
         ).apply {
             tag = TAG
@@ -126,7 +144,144 @@ class EventDetailsActivity : AppCompatActivity() {
         requestQueue.add(jsonObjectRequest)
     }
 
-    // Display all event details from the app
+    private fun fetchRegisteredUsers(eventId: Int) {
+        val url = "$API_BASE_URL/events/$eventId/users"
+
+        val jsonArrayRequest = JsonArrayRequest(
+            Request.Method.GET, url, null,
+            { response ->
+                try {
+                    registeredUsers.clear()
+                    for (i in 0 until response.length()) {
+                        val user = response.getJSONObject(i)
+                        registeredUsers.add(user.getString("username"))
+                    }
+                    updateRegistrationStatus()
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                    showError("Error parsing registered users")
+                }
+            },
+            { error ->
+                Log.e(TAG, "Error fetching registered users: ${error.message}")
+                showError("Failed to load registered users")
+            }
+        ).apply {
+            tag = TAG
+        }
+
+        requestQueue.add(jsonArrayRequest)
+    }
+
+    private fun handleRegister() {
+        val app = application as EventManagerApplication
+        val username = app.username
+        if (username.isNullOrEmpty()) {
+            showError("Please login to register for events")
+            return
+        }
+
+        showLoading(true)
+        val requestBody = JSONObject().apply {
+            put("event_id", app.eventID)
+            put("username", username)
+        }
+
+        val request = JsonObjectRequest(
+            Request.Method.POST,
+            "$API_BASE_URL/event-users",
+            requestBody,
+            { response ->
+                isRegistered = true
+                registeredUsers.add(username)
+                updateRegistrationStatus()
+                showSuccess("Successfully registered for the event!")
+                showLoading(false)
+            },
+            { error ->
+                showError("Failed to register for event")
+                showLoading(false)
+            }
+        )
+
+        requestQueue.add(request)
+    }
+
+    private fun handleUnregister() {
+        val app = application as EventManagerApplication
+        val username = app.username
+
+        showLoading(true)
+        val requestBody = JSONObject().apply {
+            put("event_id", app.eventID)
+            put("username", username)
+        }
+
+        val request = JsonObjectRequest(
+            Request.Method.DELETE,
+            "$API_BASE_URL/event-users",
+            requestBody,
+            { response ->
+                isRegistered = false
+                registeredUsers.remove(username)
+                updateRegistrationStatus()
+                showSuccess("Successfully unregistered from the event")
+                showLoading(false)
+            },
+            { error ->
+                showError("Failed to unregister from event")
+                showLoading(false)
+            }
+        )
+
+        requestQueue.add(request)
+    }
+
+    private fun showDeleteDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Delete Event")
+            .setMessage("Are you sure you want to delete this event? This action cannot be undone.")
+            .setPositiveButton("Delete") { _, _ ->
+                handleDelete()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun handleDelete() {
+        val app = application as EventManagerApplication
+        showLoading(true)
+
+        val request = JsonObjectRequest(
+            Request.Method.DELETE,
+            "$API_BASE_URL/events/${app.eventID}",
+            null,
+            { response ->
+                showSuccess("Event deleted successfully")
+                finish()
+            },
+            { error ->
+                showError("Failed to delete event")
+                showLoading(false)
+            }
+        )
+
+        requestQueue.add(request)
+    }
+
+    private fun updateRegistrationStatus() {
+        val app = application as EventManagerApplication
+        isRegistered = registeredUsers.contains(app.username)
+
+        // Update button visibility
+        registerButton.visibility = if (isRegistered) View.GONE else View.VISIBLE
+        unregisterButton.visibility = if (isRegistered) View.VISIBLE else View.GONE
+
+        // Update registered users count
+        findViewById<TextView>(R.id.text_registered_users).text = 
+            "Registered Users (${registeredUsers.size})"
+    }
+
     private fun displayEventDetails() {
         val app = application as EventManagerApplication
         
@@ -152,13 +307,10 @@ class EventDetailsActivity : AppCompatActivity() {
         // Display event description
         findViewById<TextView>(R.id.detail_event_description).text = app.eventDescription
         
-        // Get the ImageView
+        // Load event image
         val detailEventImage = findViewById<ImageView>(R.id.detail_event_image)
-
-        // Choose which image URL to use (detail image preferred)
         val imageToLoad = if (app.eventDetailImageUrl.isNotEmpty()) app.eventDetailImageUrl else app.eventImageUrl
 
-        // Load image with Glide if URL is available
         if (imageToLoad.isNotEmpty()) {
             Glide.with(this)
                 .load(imageToLoad)
@@ -166,9 +318,11 @@ class EventDetailsActivity : AppCompatActivity() {
                 .error(R.drawable.events_default)
                 .into(detailEventImage)
         } else {
-            // Fall back to resource image
             detailEventImage.setImageResource(app.eventPhoto)
         }
+
+        // Show/hide delete button based on organizer
+        deleteButton.visibility = if (app.username == app.eventOrganizer) View.VISIBLE else View.GONE
     }
 
     private fun generateQRCode(eventId: Int) {
@@ -206,6 +360,18 @@ class EventDetailsActivity : AppCompatActivity() {
             e.printStackTrace()
             Log.e(TAG, "Failed to generate QR code: ${e.message}")
         }
+    }
+
+    private fun showLoading(show: Boolean) {
+        progressBar.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    private fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showSuccess(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {

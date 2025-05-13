@@ -213,7 +213,7 @@ class RegisterActivity : Activity() {
                     }
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    Toast.makeText(this, "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this, "Error parsing server response", Toast.LENGTH_SHORT).show()
                 }
             },
             { error: VolleyError ->

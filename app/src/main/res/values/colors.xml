@@ -23,13 +23,13 @@
     <color name="semi_transparent_black">#80000000</color>
     <color name="semi_transparent_white">#80ffffff</color>
 
-    <color name="colorPrimary">#3a86ff</color>
-    <color name="colorPrimaryDark">#0057cb</color>
+    <color name="colorPrimary">#4776E6</color>
+    <color name="colorPrimaryDark">#3D67D6</color>
     <color name="colorPrimaryLight">#83b8ff</color>
-    <color name="colorSecondary">#ff006e</color>
+    <color name="colorSecondary">#FF9800</color>
     <color name="colorSecondaryDark">#c50054</color>
     <color name="colorSecondaryLight">#ff5a9d</color>
-    <color name="colorSuccess">#38b000</color>
+    <color name="colorSuccess">#4CAF50</color>
     <color name="colorSuccessLight">#70e000</color>
     <color name="colorSuccessDark">#008000</color>
     <color name="colorSecondaryText">#757575</color>
@@ -44,4 +44,13 @@
     <color name="category_sports">#F44336</color>
     <color name="category_networking">#00BCD4</color>
     <color name="category_default">#757575</color>
+
+    <!-- Custom colors -->
+    <color name="error">#FF3B30</color>
+
+    <color name="colorInfo">#2196F3</color>
+    <color name="colorWarning">#FFC107</color>
+    <color name="colorError">#F44336</color>
+    <color name="colorDefault">#9E9E9E</color>
+    <color name="gray_light">#EEEEEE</color>
 </resources>

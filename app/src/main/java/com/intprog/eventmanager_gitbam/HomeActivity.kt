@@ -2,50 +2,92 @@ package com.intprog.eventmanager_gitbam
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import com.android.volley.*
+import com.android.volley.toolbox.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
-import com.intprog.eventmanager_gitbam.fragments.DevelopersFragment
-import com.intprog.eventmanager_gitbam.fragments.HomeFragment
-import com.intprog.eventmanager_gitbam.fragments.EventListingFragment
-import com.intprog.eventmanager_gitbam.fragments.ProfileFragment
-import com.intprog.eventmanager_gitbam.fragments.SettingsFragment
-import com.intprog.eventmanager_gitbam.fragments.VendorListingFragment
-import androidx.credentials.CredentialManager
+import com.intprog.eventmanager_gitbam.fragments.*
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
-import androidx.credentials.ClearCredentialStateRequest
 import com.intprog.eventmanager_gitbam.utils.signOut
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.intprog.eventmanager_gitbam.utils.SessionManager
+import org.json.JSONArray
+import org.json.JSONObject
 
 class HomeActivity : AppCompatActivity() {
+    companion object {
+        private const val TAG = "HomeActivity"
+    }
+
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
-    private lateinit var credentialManager: CredentialManager
+    private lateinit var requestQueue: RequestQueue
+    private lateinit var progressBar: ProgressBar
+    private lateinit var sessionManager: SessionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+
+        // Initialize SessionManager
+        sessionManager = SessionManager(this)
+
+        // Check if user is logged in
+        if (!sessionManager.isLoggedIn()) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        // Initialize Volley RequestQueue
+        requestQueue = Volley.newRequestQueue(this)
+
+        // Initialize UI components
+        initializeViews()
+        setupNavigation(savedInstanceState)
+    }
+
+    private fun initializeViews() {
+        // Find views
         drawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
-        credentialManager = CredentialManager.create(this)
+        progressBar = findViewById(R.id.progress_bar)
 
+        // Setup toolbar
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        // Creating a listener and setting listener to our drawer
+        // Setup drawer toggle
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
             R.string.navigation_drawer_open, R.string.navigation_drawer_close
         )
-
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+
+        // Update navigation header with user info
+        val headerView = navView.getHeaderView(0)
+        val tvNavUsername = headerView.findViewById<TextView>(R.id.tv_nav_username)
+        val tvNavEmail = headerView.findViewById<TextView>(R.id.tv_nav_email)
+        val tvNavInitial = headerView.findViewById<TextView>(R.id.tv_nav_initial)
+
+        val app = application as EventManagerApplication
+        tvNavUsername.text = app.firstname.ifEmpty { app.username }
+        tvNavEmail.text = app.email
+        tvNavInitial.text = app.firstname.firstOrNull()?.toString() ?: app.username.firstOrNull()?.toString() ?: "U"
+    }
+
+    private fun setupNavigation(savedInstanceState: Bundle?) {
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        
         // Set default fragment
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
@@ -53,86 +95,125 @@ class HomeActivity : AppCompatActivity() {
                 .commit()
         }
 
-        // Set up navigation selection listener
-        bottomNavigationView.setOnItemSelectedListener { item: MenuItem ->
+        // Bottom navigation listener
+        bottomNavigationView.setOnItemSelectedListener { item ->
             var selectedFragment: Fragment? = null
-            val itemId = item.itemId
-            if (itemId == R.id.navigation_home) {
-                selectedFragment = HomeFragment()
-            } else if (itemId == R.id.navigation_events) {
-                selectedFragment = EventListingFragment()
+            when (item.itemId) {
+                R.id.navigation_home -> selectedFragment = HomeFragment()
+                R.id.navigation_events -> selectedFragment = EventListingFragment()
+                R.id.navigation_ai_search -> selectedFragment = AISearchFragment()
+                R.id.navigation_vendors -> selectedFragment = VendorListingFragment()
+                R.id.navigation_settings -> selectedFragment = SettingsFragment()
             }
-            else if (itemId == R.id.navigation_vendors) {
-                selectedFragment = VendorListingFragment()
-            }
-            else if (itemId == R.id.navigation_profile) {
-                selectedFragment = ProfileFragment()
-            }
-            else if (itemId == R.id.navigation_settings) {
-                selectedFragment = SettingsFragment()
-            }
+            
             if (selectedFragment != null) {
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, selectedFragment)
                     .commit()
-                return@setOnItemSelectedListener true
+                true
+            } else {
+                false
             }
-            false
         }
 
+        // Navigation drawer listener
         navView.setNavigationItemSelectedListener { menuItem ->
-            if (menuItem.itemId == R.id.nav_logout) {
-                val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-                builder.setTitle("Confirm Logout")
-                builder.setMessage("Are you sure you want to log out?")
-                builder.setPositiveButton("Yes") { _, _ ->
-                    signOut()
-                }
-                builder.setNegativeButton("Cancel") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                builder.create().show()
-                return@setNavigationItemSelectedListener true
-            }
-
             when (menuItem.itemId) {
-                R.id.drawer_home -> bottomNavigationView.selectedItemId = R.id.navigation_home
-                R.id.drawer_settings -> bottomNavigationView.selectedItemId = R.id.navigation_settings
-                R.id.drawer_vendors -> bottomNavigationView.selectedItemId = R.id.navigation_vendors
-
-                R.id.drawer_about -> {
-                    val fragment = DevelopersFragment()
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, fragment)
-                        .commit()
+                R.id.nav_logout -> {
+                    showLogoutDialog()
+                    true
                 }
-                else -> HomeFragment()
+                R.id.nav_home -> {
+                    bottomNavigationView.selectedItemId = R.id.navigation_home
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_profile -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, ProfileFragment())
+                        .commit()
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_vendors -> {
+                    bottomNavigationView.selectedItemId = R.id.navigation_vendors
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_settings -> {
+                    bottomNavigationView.selectedItemId = R.id.navigation_settings
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_about -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, AboutUsFragment())
+                        .commit()
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                else -> false
             }
-
-            drawerLayout.closeDrawers()
-            true
         }
     }
-    override fun onBackPressed() {
-        // Get current fragment
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
 
-        // Check if current fragment is EventsFragment and handle back press there first
-        if (currentFragment is EventListingFragment) {
-            val handled = currentFragment.handleBackPress()
-            if (handled) {
-                // Fragment handled the back press, no need to continue
-                return
+    private fun showLogoutDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Confirm Logout")
+            .setMessage("Are you sure you want to log out?")
+            .setPositiveButton("Yes") { _, _ ->
+                handleLogout()
             }
-        } else if (currentFragment is VendorListingFragment) {
-            val handled = currentFragment.handleBackPress()
-            if (handled) {
-                // Fragment handled the back press, no need to continue
-                return
-            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun handleLogout() {
+        // Clear session
+        sessionManager.logout()
+
+        // Clear application data
+        val app = application as EventManagerApplication
+        app.username = ""
+        app.email = ""
+        app.firstname = ""
+        app.lastname = ""
+
+        // Start LoginActivity and clear the back stack
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
+        startActivity(intent)
+        finish()
+    }
 
-        // Default back press behavior
-        super.onBackPressed()
+    fun showLoading(show: Boolean) {
+        progressBar.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onBackPressed() {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        when (currentFragment) {
+            is EventListingFragment -> {
+                if (!currentFragment.handleBackPress()) {
+                    super.onBackPressed()
+                }
+            }
+            is VendorListingFragment -> {
+                if (!currentFragment.handleBackPress()) {
+                    super.onBackPressed()
+                }
+            }
+            else -> super.onBackPressed()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        requestQueue.cancelAll(TAG)
     }
 }
