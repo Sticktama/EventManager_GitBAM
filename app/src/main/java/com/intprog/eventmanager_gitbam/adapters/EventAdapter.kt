@@ -15,6 +15,7 @@ import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.models.Event
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.Date
 
 class EventAdapter(private val onEventClick: (Event) -> Unit) :
     ListAdapter<Event, EventAdapter.EventViewHolder>(EventDiffCallback()) {
@@ -27,6 +28,19 @@ class EventAdapter(private val onEventClick: (Event) -> Unit) :
 
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
         holder.bind(getItem(position))
+    }
+
+    fun getNextEvent(): Event? {
+        return currentList.firstOrNull { event ->
+            try {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val eventDate = dateFormat.parse(event.date)
+                val currentDate = Date()
+                eventDate.after(currentDate)
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 
     inner class EventViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

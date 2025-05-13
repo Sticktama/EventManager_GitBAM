@@ -6,8 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -15,6 +14,10 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
 import com.intprog.eventmanager_gitbam.R
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
 import com.intprog.eventmanager_gitbam.utils.createProfileAvatar
@@ -25,23 +28,36 @@ import org.json.JSONObject
 class ProfileFragment : Fragment() {
 
     private lateinit var requestQueue: RequestQueue
-    private lateinit var tv_firstname: TextView
-    private lateinit var tv_middlename: TextView
-    private lateinit var tv_lastname: TextView
-    private lateinit var tv_email: TextView
-    private lateinit var tv_nav_initial: TextView
-    private lateinit var tv_nav_avatar: View
-    private lateinit var et_firstname: EditText
-    private lateinit var et_middlename: EditText
-    private lateinit var et_lastname: EditText
-    private lateinit var et_email: EditText
+    private lateinit var tvProfileName: TextView
+    private lateinit var tvProfileUsername: TextView
+    private lateinit var chipProfileRole: Chip
+    private lateinit var tvProfileInitial: TextView
+    private lateinit var tvEventsAttended: TextView
+    private lateinit var tvUpcomingEvents: TextView
+    private lateinit var tvConnections: TextView
+    private lateinit var tvFullName: TextView
+    private lateinit var tvUsername: TextView
+    private lateinit var tvEmail: TextView
+    private lateinit var tvActivityEvents: TextView
+    private lateinit var tvActivityUpcoming: TextView
+    private lateinit var btnEditProfile: MaterialButton
+    private lateinit var progressBar: ProgressBar
+
+    // Mock data for statistics
+    private val userStats = mapOf(
+        "eventsAttended" to 0,
+        "upcomingEvents" to 3,
+        "connections" to 0,
+        "activeSince" to "May 2024",
+        "lastActive" to "Today"
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.activity_profile, container, false)
+        return inflater.inflate(R.layout.fragment_profile, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -53,13 +69,10 @@ class ProfileFragment : Fragment() {
         // Initialize request queue
         requestQueue = Volley.newRequestQueue(requireContext())
 
-        // Hide edit layout initially
-        view.findViewById<View>(R.id.editLayout).visibility = View.GONE
-
         // Get application instance
         val app = requireActivity().application as EventManagerApplication
 
-        // Display current user data from application
+        // Display current user data
         displayUserData(app)
 
         // Check if we need to fetch fresh data
@@ -72,131 +85,106 @@ class ProfileFragment : Fragment() {
     }
 
     private fun initializeViews(view: View) {
-        // Initialize text views
-        tv_firstname = view.findViewById(R.id.tv_firstname)
-        tv_middlename = view.findViewById(R.id.tv_middlename)
-        tv_lastname = view.findViewById(R.id.tv_lastname)
-        tv_email = view.findViewById(R.id.tv_email)
+        // Profile header views
+        tvProfileName = view.findViewById(R.id.tv_profile_name)
+        tvProfileUsername = view.findViewById(R.id.tv_profile_username)
+        chipProfileRole = view.findViewById(R.id.chip_profile_role)
+        tvProfileInitial = view.findViewById(R.id.tv_profile_initial)
 
-        // Initialize edit text fields
-        et_firstname = view.findViewById(R.id.et_firstname)
-        et_middlename = view.findViewById(R.id.et_middlename)
-        et_lastname = view.findViewById(R.id.et_lastname)
-        et_email = view.findViewById(R.id.et_email)
+        // Stats views
+        tvEventsAttended = view.findViewById(R.id.tv_events_attended)
+        tvUpcomingEvents = view.findViewById(R.id.tv_upcoming_events)
+        tvConnections = view.findViewById(R.id.tv_connections)
 
-        // Initialize profile avatar views
-        tv_nav_initial = view.findViewById(R.id.tv_nav_initial)
-        tv_nav_avatar = view.findViewById(R.id.tv_nav_avatar)
+        // Account info views
+        tvFullName = view.findViewById(R.id.tv_full_name)
+        tvUsername = view.findViewById(R.id.tv_username)
+        tvEmail = view.findViewById(R.id.tv_email)
+
+        // Activity views
+        tvActivityEvents = view.findViewById(R.id.tv_activity_events)
+        tvActivityUpcoming = view.findViewById(R.id.tv_activity_upcoming)
+
+        // Buttons and progress
+        btnEditProfile = view.findViewById(R.id.btn_edit_profile)
+        progressBar = view.findViewById(R.id.progress_bar)
     }
 
     private fun shouldFetchUserData(app: EventManagerApplication): Boolean {
-        // Only fetch if essential data is missing
         return app.firstname.isEmpty() || app.lastname.isEmpty() || app.email.isEmpty()
     }
 
     private fun displayUserData(app: EventManagerApplication) {
-        // Set avatar initial and color
-        tv_nav_initial.text = app.username.substring(0, 1).uppercase()
-
-        // Style avatar
-        if (app.avatarColor.isNotEmpty()) {
-            val shape = GradientDrawable()
-            shape.shape = GradientDrawable.OVAL
-            shape.setColor(Color.parseColor(app.avatarColor))
-            tv_nav_avatar.background = shape
-        } else {
-            // Create avatar if color not set
-            tv_nav_initial.createProfileAvatar(app.username, tv_nav_avatar)
-        }
+        // Set profile initial and color
+        tvProfileInitial.text = app.username.substring(0, 1).uppercase()
+        tvProfileInitial.setBackgroundColor(Color.parseColor(getAvatarColor(app.username)))
 
         // Display profile info
-        tv_firstname.text = app.firstname
-        tv_middlename.text = app.middlename
-        tv_lastname.text = app.lastname
-        tv_email.text = app.email
+        tvProfileName.text = "${app.firstname} ${app.lastname}"
+        tvProfileUsername.text = "@${app.username}"
+        chipProfileRole.text = "User" // Default role for logged-in users
+
+        // Display account info
+        tvFullName.text = "${app.firstname} ${app.middlename ?: ""} ${app.lastname}".trim()
+        tvUsername.text = app.username
+        tvEmail.text = app.email
+
+        // Display stats (using mock data for now)
+        tvEventsAttended.text = userStats["eventsAttended"].toString()
+        tvUpcomingEvents.text = userStats["upcomingEvents"].toString()
+        tvConnections.text = userStats["connections"].toString()
+        tvActivityEvents.text = userStats["eventsAttended"].toString()
+        tvActivityUpcoming.text = userStats["upcomingEvents"].toString()
     }
 
     private fun setupButtonListeners(view: View, app: EventManagerApplication) {
-        val buttonEdit = view.findViewById<Button>(R.id.buttonEdit)
-        val buttonSave = view.findViewById<Button>(R.id.buttonSave)
-
-        // Edit button click listener
-        buttonEdit.setOnClickListener {
-            // Switch to edit mode
-            view.findViewById<View>(R.id.displayLayout).visibility = View.GONE
-            view.findViewById<View>(R.id.editLayout).visibility = View.VISIBLE
-
-            // Populate EditText fields with current values
-            et_firstname.setText(tv_firstname.text)
-            et_middlename.setText(tv_middlename.text)
-            et_lastname.setText(tv_lastname.text)
-            et_email.setText(tv_email.text)
+        btnEditProfile.setOnClickListener {
+            showEditProfileDialog(app)
         }
+    }
 
-        // Save button click listener
-        buttonSave.setOnClickListener {
-            if (validateInputs()) {
-                // Update UI and app data
-                updateUIWithEditedData(app)
+    private fun showEditProfileDialog(app: EventManagerApplication) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_profile, null)
+        
+        // Initialize edit text fields
+        val etFirstname = dialogView.findViewById<TextInputEditText>(R.id.et_firstname)
+        val etMiddlename = dialogView.findViewById<TextInputEditText>(R.id.et_middlename)
+        val etLastname = dialogView.findViewById<TextInputEditText>(R.id.et_lastname)
+        val etEmail = dialogView.findViewById<TextInputEditText>(R.id.et_email)
 
-                // Switch back to display mode
-                view.findViewById<View>(R.id.displayLayout).visibility = View.VISIBLE
-                view.findViewById<View>(R.id.editLayout).visibility = View.GONE
+        // Set current values
+        etFirstname.setText(app.firstname)
+        etMiddlename.setText(app.middlename)
+        etLastname.setText(app.lastname)
+        etEmail.setText(app.email)
 
-                // Send update to server
-                updateUserInfo(app.username)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Edit Profile")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                // Get edited values
+                val firstname = etFirstname.text.toString().trim()
+                val middlename = etMiddlename.text.toString().trim()
+                val lastname = etLastname.text.toString().trim()
+                val email = etEmail.text.toString().trim()
+
+                // Validate inputs
+                if (firstname.isEmpty() || lastname.isEmpty() || email.isEmpty()) {
+                    Toast.makeText(requireContext(), "Name and email cannot be empty", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                // Update profile
+                updateUserInfo(app.username, firstname, middlename, lastname, email)
             }
-        }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
-    private fun validateInputs(): Boolean {
-        val firstname = et_firstname.text.toString().trim()
-        val lastname = et_lastname.text.toString().trim()
-        val email = et_email.text.toString().trim()
+    private fun updateUserInfo(username: String, firstname: String, middlename: String, lastname: String, email: String) {
+        showLoading(true)
 
-        if (firstname.isEmpty() || email.isEmpty() || lastname.isEmpty()) {
-            Toast.makeText(requireContext(), "Name and email cannot be empty", Toast.LENGTH_SHORT).show()
-            return false
-        }
-        return true
-    }
-
-    private fun updateUIWithEditedData(app: EventManagerApplication) {
-        // Get edited values
-        val firstname = et_firstname.text.toString().trim()
-        val middlename = et_middlename.text.toString().trim()
-        val lastname = et_lastname.text.toString().trim()
-        val email = et_email.text.toString().trim()
-
-        // Update UI
-        tv_firstname.text = firstname
-        tv_middlename.text = middlename
-        tv_lastname.text = lastname
-        tv_email.text = email
-
-        // Update application data
-        app.firstname = firstname
-        app.middlename = middlename
-        app.lastname = lastname
-        app.email = email
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // Cancel any pending requests when the fragment is destroyed
-        requestQueue.cancelAll(this)
-    }
-
-    private fun updateUserInfo(username: String) {
         val API_URL = "https://sysarch.glitch.me/api/update-user"
-
-        // Get values directly from EditText fields
-        val firstname = et_firstname.text.toString().trim()
-        val middlename = et_middlename.text.toString().trim()
-        val lastname = et_lastname.text.toString().trim()
-        val email = et_email.text.toString().trim()
-
-        // Create JSON request body
         val requestBody = JSONObject().apply {
             put("username", username)
             put("email", email)
@@ -210,21 +198,30 @@ class ProfileFragment : Fragment() {
             API_URL,
             requestBody,
             { response ->
-                // Check if fragment is still attached before using context
-                if (!isAdded) return@JsonObjectRequest
-
+                showLoading(false)
                 try {
                     val message = response.getString("message")
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                    if (message.contains("success", ignoreCase = true)) {
+                        // Update application data
+                        val app = requireActivity().application as EventManagerApplication
+                        app.firstname = firstname
+                        app.middlename = middlename
+                        app.lastname = lastname
+                        app.email = email
+
+                        // Update UI
+                        displayUserData(app)
+                        Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                    }
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    //Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->
-                // Check if fragment is still attached before using context
-                if (!isAdded) return@JsonObjectRequest
-
+                showLoading(false)
                 val errorMessage = when (error.networkResponse?.statusCode) {
                     400 -> "Missing required fields"
                     404 -> "User not found"
@@ -235,58 +232,44 @@ class ProfileFragment : Fragment() {
             }
         ).also { it.tag = this }
 
-        // Add the request to the RequestQueue
         requestQueue.add(jsonObjectRequest)
     }
 
     private fun fetchUserInfo(username: String) {
+        showLoading(true)
+
         val API_URL = "https://sysarch.glitch.me/api/userinfo?username=$username"
-
         val jsonObjectRequest = JsonObjectRequest(
-            Request.Method.GET, API_URL, null,
+            Request.Method.GET,
+            API_URL,
+            null,
             { response ->
-                // Check if fragment is still attached before using context
-                if (!isAdded) return@JsonObjectRequest
-
+                showLoading(false)
                 try {
-                    val app = requireActivity().application as EventManagerApplication
                     val message = response.getString("message")
                     if (message == "user found") {
                         val userInfo = response.getJSONObject("user_info")
-
-                        // Extract user data
-                        val firstname = userInfo.getString("firstname")
-                        val middlename = userInfo.getString("middlename")
-                        val lastname = userInfo.getString("lastname")
-                        val email = userInfo.getString("email")
+                        val app = requireActivity().application as EventManagerApplication
 
                         // Update application data
                         app.avatarColor = getAvatarColor(username)
-                        app.firstname = firstname
-                        app.middlename = middlename
-                        app.lastname = lastname
-                        app.email = email
+                        app.firstname = userInfo.getString("firstname")
+                        app.middlename = userInfo.getString("middlename")
+                        app.lastname = userInfo.getString("lastname")
+                        app.email = userInfo.getString("email")
 
-                        // Update UI with user info
-                        tv_firstname.text = firstname
-                        tv_middlename.text = middlename
-                        tv_lastname.text = lastname
-                        tv_email.text = email
-
-                        // Update avatar
-                        tv_nav_initial.createProfileAvatar(username, tv_nav_avatar)
+                        // Update UI
+                        displayUserData(app)
                     } else {
                         Toast.makeText(requireContext(), "Error: $message", Toast.LENGTH_LONG).show()
                     }
                 } catch (e: JSONException) {
                     e.printStackTrace()
-                    //Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Error parsing server response", Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->
-                // Check if fragment is still attached before using context
-                if (!isAdded) return@JsonObjectRequest
-
+                showLoading(false)
                 val errorMessage = when (error.networkResponse?.statusCode) {
                     400 -> "Missing username parameter"
                     403 -> "User does not exist"
@@ -296,7 +279,16 @@ class ProfileFragment : Fragment() {
             }
         ).also { it.tag = this }
 
-        // Add the request to the RequestQueue
         requestQueue.add(jsonObjectRequest)
+    }
+
+    private fun showLoading(show: Boolean) {
+        progressBar.visibility = if (show) View.VISIBLE else View.GONE
+        btnEditProfile.isEnabled = !show
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        requestQueue.cancelAll(this)
     }
 }

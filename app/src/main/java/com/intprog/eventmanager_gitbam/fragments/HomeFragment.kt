@@ -1,6 +1,5 @@
 package com.intprog.eventmanager_gitbam.fragments
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -12,24 +11,23 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
-import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
-import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.navigation.NavigationView
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.intprog.eventmanager_gitbam.EventDetailsActivity
 import com.intprog.eventmanager_gitbam.R
-import com.intprog.eventmanager_gitbam.VendorDetailsActivity
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
-import com.intprog.eventmanager_gitbam.utils.NotificationUtils
 import com.intprog.eventmanager_gitbam.utils.createProfileAvatar
 import com.intprog.eventmanager_gitbam.utils.fetchServerTime
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import kotlin.random.Random
+import com.intprog.eventmanager_gitbam.adapters.ActivityAdapter
+import com.intprog.eventmanager_gitbam.adapters.EventAdapter
+import com.intprog.eventmanager_gitbam.models.Activity
+import com.intprog.eventmanager_gitbam.models.Event
+import java.text.SimpleDateFormat
+import java.util.*
 
 class HomeFragment : Fragment() {
     private lateinit var tv_nav_initial: TextView
@@ -38,15 +36,25 @@ class HomeFragment : Fragment() {
     private lateinit var view_nav_avatar: View
     private val TAG = "HomeFragment"
 
-    // Add these variables to reference the TextViews
+    // Stats views
     private lateinit var tvTotalEvents: TextView
     private lateinit var tvMonthlyEvents: TextView
+
+    // Next event views
     private lateinit var tvNextEventName: TextView
     private lateinit var tvNextEventDay: TextView
     private lateinit var tvNextEventMonth: TextView
     private lateinit var tvNextEventTime: TextView
     private lateinit var tvNextEventLocation: TextView
-    private lateinit var tvNextEventId: TextView
+    private lateinit var btnNextEvent: Button
+    private lateinit var layoutNextEvent: View
+    private lateinit var tvNoEvents: TextView
+
+    // RecyclerViews
+    private lateinit var rvActivities: RecyclerView
+    private lateinit var rvYourEvents: RecyclerView
+    private lateinit var activityAdapter: ActivityAdapter
+    private lateinit var eventAdapter: EventAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,15 +69,10 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val app = requireActivity().application as EventManagerApplication
 
-        // Initialize the TextViews
-        tvTotalEvents = view.findViewById(R.id.tv_total_events)
-        tvMonthlyEvents = view.findViewById(R.id.tv_monthly_events)
-        tvNextEventName = view.findViewById(R.id.next_event_name)
-        tvNextEventDay = view.findViewById(R.id.next_event_day)
-        tvNextEventMonth = view.findViewById(R.id.next_event_month)
-        tvNextEventTime = view.findViewById(R.id.next_event_time)
-        tvNextEventLocation = view.findViewById(R.id.next_event_location)
-        tvNextEventId = view.findViewById(R.id.next_event_id)
+        // Initialize views
+        initializeViews(view)
+        setupRecyclerViews()
+        setupClickListeners()
 
         // Get reference to the NavigationView
         val navigationView = requireActivity().findViewById<NavigationView>(R.id.nav_view)
@@ -88,312 +91,206 @@ class HomeFragment : Fragment() {
         tv_nav_initial.createProfileAvatar(app.username, view_nav_avatar)
         tv_nav_username.text = app.username
 
-        // Set up navigation to Event Details for the next event
-        view.findViewById<Button>(R.id.next_event_button).setOnClickListener {
-            val intent = Intent(requireContext(), EventDetailsActivity::class.java)
+        // Fetch data
+        fetchUserEvents()
+    }
 
-            // Pass event details from the "Next Event" card
-            app.eventID = tvNextEventId.text.toString().toInt()
-            app.eventName = tvNextEventName.text.toString()
+    private fun initializeViews(view: View) {
+        // Stats views
+        tvTotalEvents = view.findViewById(R.id.tv_total_events)
+        tvMonthlyEvents = view.findViewById(R.id.tv_monthly_events)
 
-            // Construct date from the day and month shown on card
-            val day = tvNextEventDay.text.toString()
-            val month = tvNextEventMonth.text.toString()
-            app.eventDate = "2023-${getMonthNumber(month)}-$day"
+        // Next event views
+        tvNextEventName = view.findViewById(R.id.next_event_name)
+        tvNextEventDay = view.findViewById(R.id.next_event_day)
+        tvNextEventMonth = view.findViewById(R.id.next_event_month)
+        tvNextEventTime = view.findViewById(R.id.next_event_time)
+        tvNextEventLocation = view.findViewById(R.id.next_event_location)
+        btnNextEvent = view.findViewById(R.id.next_event_button)
+        layoutNextEvent = view.findViewById(R.id.layout_next_event)
+        tvNoEvents = view.findViewById(R.id.tv_no_events)
 
-            app.eventLocation = tvNextEventLocation.text.toString()
+        // RecyclerViews
+        rvActivities = view.findViewById(R.id.rv_activities)
+        rvYourEvents = view.findViewById(R.id.rv_your_events)
+    }
 
-            // Default values for fields not shown on the next event card
-            app.eventDescription = "Annual music festival featuring local bands and artists"
-            app.eventOrganizer = "City Cultural Department"
-            app.eventPrice = 25
-            app.eventPhoto = R.drawable.events_default
-
-            startActivity(intent)
+    private fun setupRecyclerViews() {
+        // Setup activities RecyclerView
+        activityAdapter = ActivityAdapter()
+        rvActivities.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = activityAdapter
         }
 
-        // Set up Quick Actions
-        view.findViewById<CardView>(R.id.quick_action_create_event).setOnClickListener {
-            // Navigate to create event screen
-            val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
-            bottomNav.selectedItemId = R.id.navigation_events
+        // Setup events RecyclerView
+        eventAdapter = EventAdapter { event ->
+            // Handle event click
+            val eventDetailsFragment = EventDetailsFragment.newInstance(event)
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, eventDetailsFragment)
+                .addToBackStack(null)
+                .commit()
         }
-
-        view.findViewById<CardView>(R.id.quick_action_find_vendors).setOnClickListener {
-            // Navigate to vendors screen
-            val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
-            bottomNav.selectedItemId = R.id.navigation_vendors
-        }
-
-        // Fetch event count for the current user
-        fetchEventCount(app.username)
-
-        // Set up vendor cards if present
-        setupFeaturedVendorCards(view, app)
-
-        // Create notification channel
-        NotificationUtils.createNotificationChannel(requireContext())
-
-        // Show notification badge if there are unread notifications
-        updateNotificationBadge()
-
-        // Set up "Generate Sample Notification" button (for demo purposes)
-        view.findViewById<Button>(R.id.button_generate_notification)?.setOnClickListener {
-            generateSampleNotification()
+        rvYourEvents.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = eventAdapter
         }
     }
 
-    private fun setupFeaturedVendorCards(view: View, app: EventManagerApplication) {
-        // Featured vendor 1
-        view.findViewById<CardView>(R.id.featured_vendor_card_1)?.setOnClickListener {
-            val intent = Intent(requireContext(), VendorDetailsActivity::class.java)
-            app.vendorID = 1
-            app.vendorName =
-                view.findViewById<TextView>(R.id.featured_vendor_name_1).text.toString()
-            app.vendorCategory =
-                view.findViewById<TextView>(R.id.featured_vendor_category_1).text.toString()
-            app.vendorLocation = "Makati City, Philippines"
-            app.vendorDescription =
-                "Premium catering service for all types of events. We offer a wide range of cuisines and customizable menu options."
-            app.vendorRating = 4.5f
-            app.vendorPrice = 15000
-            app.vendorContact = "delightful@catering.com"
-            app.vendorPhoto = R.drawable.events_default
-            startActivity(intent)
-        }
-
-        // Featured vendor 2
-        view.findViewById<CardView>(R.id.featured_vendor_card_2)?.setOnClickListener {
-            val intent = Intent(requireContext(), VendorDetailsActivity::class.java)
-            app.vendorID = 2
-            app.vendorName =
-                view.findViewById<TextView>(R.id.featured_vendor_name_2).text.toString()
-            app.vendorCategory =
-                view.findViewById<TextView>(R.id.featured_vendor_category_2).text.toString()
-            app.vendorLocation = "Quezon City, Philippines"
-            app.vendorDescription =
-                "Professional event photography services. We capture the precious moments of your special event."
-            app.vendorRating = 4.7f
-            app.vendorPrice = 7000
-            app.vendorContact = "photos@eventshoot.com"
-            app.vendorPhoto = R.drawable.events_default
-            startActivity(intent)
+    private fun setupClickListeners() {
+        btnNextEvent.setOnClickListener {
+            // Handle next event click
+            val event = eventAdapter.getNextEvent()
+            if (event != null) {
+                val eventDetailsFragment = EventDetailsFragment.newInstance(event)
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, eventDetailsFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun fetchEventCount(username: String) {
+    private fun fetchUserEvents() {
+        val username = (requireActivity().application as EventManagerApplication).username
         val url = "https://sysarch.glitch.me/api/users/${username}/events"
-
-        Log.d(TAG, "Fetching events for user: $username")
-        Log.d(TAG, "API URL: $url")
 
         val eventRequest = JsonArrayRequest(
             Request.Method.GET, url, null,
             { response ->
-                // Check if fragment is still attached
-                if (!isAdded) {
-                    Log.e(TAG, "Fragment not attached, skipping UI update")
-                    return@JsonArrayRequest
-                }
-
                 try {
-                    Log.d(TAG, "Received events response with ${response.length()} events")
-
-                    // Immediately update total events count
+                    // Update total events count
                     tvTotalEvents.text = response.length().toString()
 
                     // Get current time to calculate monthly events
                     fetchServerTime(requireActivity(), TAG, requestQueue) { serverTime ->
-                        if (!isAdded) {
-                            Log.e(TAG, "Fragment not attached during server time callback")
-                            return@fetchServerTime
-                        }
-
                         if (serverTime != null) {
                             try {
-                                Log.d(TAG, "Current time: $serverTime")
-
-                                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                                val currentDate = LocalDate.parse(serverTime.substring(0, 10))
-                                val currentMonth = currentDate.monthValue
-
-                                Log.d(TAG, "Current month: $currentMonth")
+                                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                val currentDate = dateFormat.parse(serverTime.substring(0, 10))
+                                val calendar = Calendar.getInstance()
+                                calendar.time = currentDate
+                                val currentMonth = calendar.get(Calendar.MONTH)
 
                                 var monthlyEventCount = 0
-                                var nextEvent: org.json.JSONObject? = null
-                                var nextEventDate: LocalDate? = null
+                                val events = mutableListOf<Event>()
+                                val activities = mutableListOf<Activity>()
+                                var nextEvent: Event? = null
+                                var nextEventDate: Date? = null
 
-                                // Count events in current month and find next event
+                                // Process events
                                 for (i in 0 until response.length()) {
-                                    try {
-                                        val event = response.getJSONObject(i)
-                                        val dateStr = event.getString("date")
-                                        Log.d(TAG, "Event date: $dateStr")
+                                    val event = response.getJSONObject(i)
+                                    val dateStr = event.getString("date")
+                                    val eventDate = dateFormat.parse(dateStr)
 
-                                        val eventDate = LocalDate.parse(dateStr, formatter)
-                                        if (eventDate.monthValue == currentMonth) {
-                                            monthlyEventCount++
-                                            Log.d(TAG, "Event in current month: ${event.getString("name")}")
-                                        }
-
-                                        // Check if this is the next upcoming event
-                                        if (eventDate.isAfter(currentDate) && (nextEventDate == null || eventDate.isBefore(nextEventDate))) {
-                                            nextEvent = event
-                                            nextEventDate = eventDate
-                                        }
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "Error parsing event: ${e.message}")
+                                    // Count monthly events
+                                    calendar.time = eventDate
+                                    if (calendar.get(Calendar.MONTH) == currentMonth) {
+                                        monthlyEventCount++
                                     }
+
+                                    // Create Event object
+                                    val eventObj = Event(
+                                        eventId = event.getInt("event_id"),
+                                        name = event.optString("name", "Untitled Event"),
+                                        description = event.optString("description", "No description available"),
+                                        date = dateStr,
+                                        time = event.optString("time", "Time not specified"),
+                                        location = event.optString("location", "Location not specified"),
+                                        category = event.optString("category", "Uncategorized"),
+                                        price = event.optString("price", "Free"),
+                                        imageUrl = event.optString("image", null)
+                                    )
+
+                                    // Find next event
+                                    if (eventDate.after(currentDate) && (nextEventDate == null || eventDate.before(nextEventDate))) {
+                                        nextEvent = eventObj
+                                        nextEventDate = eventDate
+                                    }
+
+                                    events.add(eventObj)
+
+                                    // Create Activity object
+                                    val activityDateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                    activities.add(Activity(
+                                        id = event.getInt("event_id"),
+                                        text = "Registered for: ${event.optString("name", "Untitled Event")}",
+                                        time = activityDateFormat.format(eventDate)
+                                    ))
                                 }
 
-                                Log.d(TAG, "Monthly event count: $monthlyEventCount")
+                                // Sort events by date
+                                events.sortBy { dateFormat.parse(it.date) }
 
-                                // Update UI with monthly count
+                                // Update UI
                                 tvMonthlyEvents.text = monthlyEventCount.toString()
-
-                                // Update next event card if we found one
-                                nextEvent?.let { event ->
-                                    try {
-                                        val eventDate = LocalDate.parse(event.getString("date"), formatter)
-                                        tvNextEventDay.text = eventDate.dayOfMonth.toString()
-                                        tvNextEventMonth.text = eventDate.month.toString().substring(0, 3).uppercase()
-                                        tvNextEventName.text = event.getString("name")
-                                        tvNextEventTime.text = event.optString("time", "10:00 AM - 8:00 PM")
-                                        tvNextEventLocation.text = event.optString("location", "Central Park")
-                                        tvNextEventId.text = event.optString("id", "E001")
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "Error updating next event card: ${e.message}")
-                                    }
-                                }
+                                updateNextEventCard(nextEvent)
+                                eventAdapter.submitList(events)
+                                activityAdapter.submitList(activities)
 
                             } catch (e: Exception) {
-                                Log.e(TAG, "Error processing current time: ${e.message}", e)
-                                tvMonthlyEvents.text = "0" // Fallback value
+                                Log.e(TAG, "Error processing events: ${e.message}", e)
+                                showError("Error processing events data")
                             }
                         } else {
-                            Log.e(TAG, "Current time was null")
-                            tvMonthlyEvents.text = "0" // Fallback value
+                            showError("Error fetching current time")
                         }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error parsing events response: ${e.message}", e)
-                    if (isAdded) {
-                        tvTotalEvents.text = "0" // Fallback value
-                        tvMonthlyEvents.text = "0" // Fallback value
-                        Toast.makeText(requireContext(), "Error parsing events data", Toast.LENGTH_SHORT).show()
-                    }
+                    showError("Error parsing events data")
                 }
             },
             { error ->
-                // Check if fragment is still attached
-                if (!isAdded) return@JsonArrayRequest
-
                 Log.e(TAG, "Error fetching events: ${error.message}", error)
-                tvTotalEvents.text = "0" // Fallback value
-                tvMonthlyEvents.text = "0" // Fallback value
-                Toast.makeText(requireContext(), "Failed to load event data. Please try again.", Toast.LENGTH_LONG).show()
+                showError("Failed to load event data")
             }
         ).apply {
             tag = TAG
         }
 
-        // Add request to queue
         requestQueue.add(eventRequest)
-        Log.d(TAG, "Event request added to queue")
     }
 
-    private fun updateNotificationBadge() {
-        val app = requireActivity().application as EventManagerApplication
-        val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
+    private fun updateNextEventCard(event: Event?) {
+        if (event != null) {
+            try {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val eventDate = dateFormat.parse(event.date)
+                val calendar = Calendar.getInstance()
+                calendar.time = eventDate
 
-        if (app.hasUnreadNotifications) {
-            val badge = bottomNav.getOrCreateBadge(R.id.navigation_settings)
-            badge.isVisible = true
-            badge.number = 1
-            badge.badgeGravity = BadgeDrawable.TOP_END
+                tvNextEventDay.text = calendar.get(Calendar.DAY_OF_MONTH).toString()
+                tvNextEventMonth.text = SimpleDateFormat("MMM", Locale.getDefault()).format(eventDate).uppercase()
+                tvNextEventName.text = event.name
+                tvNextEventTime.text = event.time
+                tvNextEventLocation.text = event.location
+                
+                layoutNextEvent.visibility = View.VISIBLE
+                tvNoEvents.visibility = View.GONE
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating next event card: ${e.message}", e)
+                showNoEvents()
+            }
         } else {
-            bottomNav.removeBadge(R.id.navigation_settings)
+            showNoEvents()
         }
     }
 
-    private fun generateSampleNotification() {
-        val notificationTypes = listOf("event", "vendor", "general")
-        val randomType = notificationTypes.random()
-
-        when (randomType) {
-            "event" -> {
-                val eventNames = listOf("Music Festival", "Tech Conference", "Food Fair", "Charity Run", "Art Exhibition")
-                val randomEvent = eventNames.random()
-                val randomDay = Random.nextInt(1, 28)
-                val randomMonth = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec").random()
-                val eventDate = "$randomDay $randomMonth"
-
-                NotificationUtils.showEventNotification(
-                    requireContext(),
-                    Random.nextInt(1, 100),
-                    randomEvent,
-                    eventDate,
-                    Random.nextInt(1000)
-                )
-            }
-            "vendor" -> {
-                val vendorNames = listOf("Delightful Catering", "Sound Systems Inc.", "Party Decorations Co.", "Happy Clown Entertainment", "Event Photography Pro")
-                val eventNames = listOf("Music Festival", "Tech Conference", "Food Fair", "Charity Run", "Art Exhibition")
-
-                NotificationUtils.showVendorBookingNotification(
-                    requireContext(),
-                    Random.nextInt(1, 100),
-                    vendorNames.random(),
-                    eventNames.random(),
-                    Random.nextInt(1000)
-                )
-            }
-            "general" -> {
-                val titles = listOf("New Feature", "Account Update", "Payment Confirmed", "Promotion")
-                val messages = listOf(
-                    "We've added new features to the app!",
-                    "Your account information has been updated",
-                    "Your payment has been processed successfully",
-                    "Special offer: 20% off on your next event booking"
-                )
-
-                NotificationUtils.showGeneralNotification(
-                    requireContext(),
-                    titles.random(),
-                    messages.random(),
-                    Random.nextInt(1000)
-                )
-            }
-        }
-
-        // Update the notification badge
-        val app = requireActivity().application as EventManagerApplication
-        app.hasUnreadNotifications = true
-        updateNotificationBadge()
+    private fun showNoEvents() {
+        layoutNextEvent.visibility = View.GONE
+        tvNoEvents.visibility = View.VISIBLE
     }
 
-    private fun getMonthNumber(monthAbbr: String): String {
-        return when (monthAbbr.uppercase()) {
-            "JAN" -> "01"
-            "FEB" -> "02"
-            "MAR" -> "03"
-            "APR" -> "04"
-            "MAY" -> "05"
-            "JUN" -> "06"
-            "JUL" -> "07"
-            "AUG" -> "08"
-            "SEP" -> "09"
-            "OCT" -> "10"
-            "NOV" -> "11"
-            "DEC" -> "12"
-            else -> "01"
-        }
+    private fun showError(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
-    override fun onResume() {
-        super.onResume()
-        // Update notification badge when fragment becomes visible again
-        updateNotificationBadge()
+    override fun onDestroy() {
+        super.onDestroy()
+        requestQueue.cancelAll(TAG)
     }
 }

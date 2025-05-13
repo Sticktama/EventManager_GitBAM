@@ -16,6 +16,7 @@ import com.android.volley.toolbox.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.intprog.eventmanager_gitbam.fragments.*
+import com.intprog.eventmanager_gitbam.fragments.CreateEventFragment
 import com.intprog.eventmanager_gitbam.app.EventManagerApplication
 import com.intprog.eventmanager_gitbam.utils.signOut
 import com.intprog.eventmanager_gitbam.utils.SessionManager
@@ -119,24 +120,34 @@ class HomeActivity : AppCompatActivity() {
         // Navigation drawer listener
         navView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.nav_logout -> {
-                    showLogoutDialog()
-                    true
-                }
                 R.id.nav_home -> {
                     bottomNavigationView.selectedItemId = R.id.navigation_home
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_create_event -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, CreateEventFragment())
+                        .addToBackStack(null)
+                        .commit()
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_events -> {
+                    bottomNavigationView.selectedItemId = R.id.navigation_events
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_vendors -> {
+                    bottomNavigationView.selectedItemId = R.id.navigation_vendors
                     drawerLayout.closeDrawers()
                     true
                 }
                 R.id.nav_profile -> {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, ProfileFragment())
+                        .addToBackStack(null)
                         .commit()
-                    drawerLayout.closeDrawers()
-                    true
-                }
-                R.id.nav_vendors -> {
-                    bottomNavigationView.selectedItemId = R.id.navigation_vendors
                     drawerLayout.closeDrawers()
                     true
                 }
@@ -148,8 +159,13 @@ class HomeActivity : AppCompatActivity() {
                 R.id.nav_about -> {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, AboutUsFragment())
+                        .addToBackStack(null)
                         .commit()
                     drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_logout -> {
+                    showLogoutDialog()
                     true
                 }
                 else -> false

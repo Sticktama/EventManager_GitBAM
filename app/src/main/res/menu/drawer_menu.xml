@@ -2,28 +2,51 @@
 <menu
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:showIn = "navigation_view">
-    <group
-        android:checkableBehavior="single">
+    tools:showIn="navigation_view">
+
+    <!-- Main Navigation Group -->
+    <group android:checkableBehavior="single">
         <item
-            android:id="@+id/drawer_home"
+            android:id="@+id/nav_home"
             android:icon="@drawable/ic_home"
             android:title="Home"/>
+        
         <item
-            android:id="@+id/drawer_vendors"
-            android:icon="@android:drawable/ic_menu_myplaces"
+            android:id="@+id/nav_create_event"
+            android:icon="@drawable/ic_add"
+            android:title="Create Event"/>
+        
+        <item
+            android:id="@+id/nav_events"
+            android:icon="@drawable/ic_events"
+            android:title="My Events"/>
+        
+        <item
+            android:id="@+id/nav_vendors"
+            android:icon="@drawable/ic_vendors"
             android:title="Vendors"/>
+    </group>
+
+    <!-- Settings Group -->
+    <group android:checkableBehavior="single">
         <item
-            android:id="@+id/drawer_settings"
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_person"
+            android:title="Profile"/>
+        
+        <item
+            android:id="@+id/nav_settings"
             android:icon="@drawable/ic_settings"
             android:title="Settings"/>
+        
         <item
-            android:id="@+id/drawer_about"
-            android:icon="@drawable/ic_about"
+            android:id="@+id/nav_about"
+            android:icon="@drawable/ic_info"
             android:title="About Us"/>
     </group>
-    <item
-        android:title="">
+
+    <!-- Logout Section -->
+    <item android:title="">
         <menu>
             <item
                 android:id="@+id/nav_logout"

@@ -53,4 +53,6 @@
     <color name="colorError">#F44336</color>
     <color name="colorDefault">#9E9E9E</color>
     <color name="gray_light">#EEEEEE</color>
+
+    <color name="colorAccent">#03A9F4</color>
 </resources>
